@@ -1,1 +1,19 @@
 .venv
+
+# build output (./build.sh recreates it)
+build/
+
+# dev server debug output (tools/devserver.py --dump)
+devserver-dumps/
+
+# firmware backups from the switch; Netgear's firmware, not to be redistributed
+tftp_root/
+
+# Python
+__pycache__/
+*.pyc
+
+# Ghidra runtime noise
+ghidra/**/application.log
+*.lock
+*.lock~

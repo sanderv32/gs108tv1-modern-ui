@@ -204,7 +204,7 @@ def pool_range(img):
     return lo, hi
 
 
-def pack(bin_path, src, out_bin):
+def pack(bin_path, src, out_bin, minify=False, ui_version="unknown"):
     img = Image(open(bin_path, "rb").read())
     rows = img.table()
     man = json.load(open(os.path.join(src, "manifest.json")))
@@ -220,6 +220,11 @@ def pack(bin_path, src, out_bin):
     desc_of = {}
     for cid in order:
         blob = open(os.path.join(src, "files", cid), "rb").read()
+        blob = blob.replace(b"@@UI_VERSION@@", ui_version.encode("ascii", "xmlcharrefreplace"))  # build stamp (build.sh)
+        if minify:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import minify as mz
+            blob = mz.minify(cid, blob)
         if cid in templates:
             recs = parse(blob)
         else:
@@ -283,6 +288,12 @@ def check_hex(path, quiet=False):
         fail("comment must be 12 hex chars, got %r" % comment)
     plen, psum = int(comment[:8], 16), int(comment[8:], 16)
     payload = h[o:]
+    if plen == len(payload) - 1 and payload.endswith(b"\n"):
+        # firmware.bin backups from the switch end with one extra "\n" after the gzip data
+        if not quiet:
+            print("%s: note: ignoring 1 trailing newline (switch backup)" % path)
+        payload = payload[:-1]
+        h = h[:-1]
     if plen != len(payload):
         fail("length in comment %#x != payload %#x" % (plen, len(payload)))
     if sum(payload) & 0xffff != psum:
@@ -322,6 +333,8 @@ def main():
     a = s.add_parser("pack", help="source tree + stock .bin -> new .bin (and .hex)")
     a.add_argument("bin"); a.add_argument("src"); a.add_argument("-o", "--out", required=True)
     a.add_argument("--hex", help="also write the gzip upload image")
+    a.add_argument("--minify", action="store_true", help="minify HTML/JS/CSS (see tools/minify.py)")
+    a.add_argument("--ui-version", default="unknown", help="text for @@UI_VERSION@@ (System Information)")
     a = s.add_parser("verify", help="prove extract+pack reproduces the stock image")
     a.add_argument("bin")
     a = s.add_parser("checkhex", help="validate an upload image like the firmware does")
@@ -332,7 +345,7 @@ def main():
     if args.cmd == "extract":
         extract(args.bin, args.out)
     elif args.cmd == "pack":
-        elf = pack(args.bin, args.src, args.out)
+        elf = pack(args.bin, args.src, args.out, args.minify, args.ui_version)
         if args.hex:
             make_hex(elf, args.hex)
             check_hex(args.hex)
