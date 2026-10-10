@@ -17,3 +17,8 @@ __pycache__/
 ghidra/**/application.log
 *.lock
 *.lock~
+
+# Ghidra UI state (window layout, preferences); rewritten every session
+ghidra/ghidra_11.4.2_PUBLIC/FrontEndTool.xml
+ghidra/ghidra_11.4.2_PUBLIC/preferences
+ghidra/ghidra_11.4.2_PUBLIC/tools/_code_browser.tcd
