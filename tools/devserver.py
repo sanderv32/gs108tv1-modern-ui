@@ -151,6 +151,37 @@ class Site:
             else:
                 self.static_blob[r["name"]] = blobs[r["desc"]]
 
+    def add_running(self, paths):
+        """Templates of firmware images the switch may be running instead of stock (our builds).
+        Responses from such a switch don't match the stock templates, so try these too."""
+        self.running = []
+        for path in paths:
+            try:
+                img = fw.Image(open(path, "rb").read())
+            except (OSError, SystemExit):
+                continue
+            trees, cache = {}, {}
+            for r in img.table():
+                if r["desc"] not in cache:
+                    blob, is_tpl = fw.render(img, img.records(r["desc"])[0])
+                    cache[r["desc"]] = load(blob) if is_tpl else None
+                if cache[r["desc"]] is not None:
+                    trees[r["name"]] = cache[r["desc"]]
+            self.running.append((os.path.basename(path), trees))
+
+    def match(self, name, body):
+        """Values from the switch's page: stock template first, then the running builds."""
+        values = extract_values(self.stock[name], body)
+        if values is not None:
+            return values, "stock"
+        for label, trees in getattr(self, "running", []):
+            t = trees.get(name)
+            if t is not None:
+                values = extract_values(t, body)
+                if values is not None:
+                    return values, label
+        return None, None
+
     def local(self, name):
         cid = self.entry.get(name)
         if cid is None:
@@ -220,14 +251,15 @@ def make_app(site, switch):
         status = "passthrough"
         if r.status_code == 200 and name in site.stock and blob is not None and blob != site.stock_blob.get(name):
             try:
-                values = extract_values(site.stock[name], body)
+                values, base = site.match(name, body)
                 if values is None:
                     status = "no-match"
                     dump(name, body)
                 else:
                     missing = set()
                     body = fill(load(blob), [values], missing)
-                    status = "rendered" + (" missing=%d" % len(missing) if missing else "")
+                    status = "rendered" + ("" if base == "stock" else " via " + base) \
+                             + (" missing=%d" % len(missing) if missing else "")
             except Exception:
                 app.logger.exception("rendering %s failed, passing the switch's page through", name)
                 dump(name, body)
@@ -289,6 +321,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--switch", default="http://192.168.0.239")
     p.add_argument("--bin", default=os.path.join(ROOT, "GS108T-V3.0.4.10.bin"), help="stock firmware")
+    p.add_argument("--running", nargs="*", default=None,
+                   help="firmware .bin(s) the switch may be running (default: build/*.bin)")
     p.add_argument("--src", default=os.path.join(ROOT, "web"), help="edited source tree")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8088)  # 8080 is the GhidraMCP bridge
@@ -299,6 +333,8 @@ def main():
     global DUMP_ALL
     DUMP_ALL = a.dump
     site = Site(a.bin, a.src, a.minify)
+    import glob
+    site.add_running(a.running if a.running is not None else sorted(glob.glob(os.path.join(ROOT, "build", "*.bin")) + glob.glob(os.path.join(ROOT, "build", "archive", "*.bin"))))
     if a.selftest:
         sys.exit(0 if selftest(site) else 1)
     import logging

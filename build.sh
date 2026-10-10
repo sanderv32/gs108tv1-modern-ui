@@ -50,5 +50,10 @@ if len(a) != len(b) or code:
     sys.exit("FAIL: firmware code changed (%d bytes) - do not flash" % code)
 print("code unchanged: OK")
 EOF
+# keep every build: the devserver needs the image the switch is running to read its pages
+TAG="$(echo "$UI_VERSION" | cut -d' ' -f1)"
+mkdir -p build/archive
+cp "$OUT-min.bin" "build/archive/$TAG-min.bin"
+echo "archived: build/archive/$TAG-min.bin"
 echo
 echo "Flash: .venv/bin/python tools/flash.py $OUT-min.hex   (dry run; add --upload to flash)"
