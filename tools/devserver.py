@@ -280,7 +280,8 @@ def make_app(site, switch):
                 status = "rendered errormsg.htm"
         if DUMP_ALL and r.status_code == 200 and name:
             dump(name, r.content)  # raw switch output, before any re-rendering
-        body = body.replace(sw_host.encode(), request.host.encode())
+        # point absolute URLs at the devserver, but leave the switch's address as page text (e.g. "IP address")
+        body = re.sub(rb"(https?:)?//" + re.escape(sw_host.encode()), lambda m: (m.group(1) or b"") + b"//" + request.host.encode(), body)
         out = Response(body, status=r.status_code)
         for k, v in r.raw.headers.items():
             if k.lower() not in HOP:
