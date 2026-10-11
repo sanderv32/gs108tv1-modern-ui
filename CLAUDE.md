@@ -42,7 +42,8 @@ Run `--selftest` and `verify` after changing either tool.
 - Templates (listed in `manifest.json` "templates") contain `{{var fn=… id=…}}` and `{{block …}} … {{/block}}`.
   These are calls into C code: keep every one (they may be moved/reordered; the devserver can't preview new ones).
 - Keep form field names and form `action` targets (`*.cgi`) unchanged – the C handlers parse them.
-- Login: POST `password` (+ `rtime`) to `login.cgi`; session cookie `WSSHID` (path=/login.cgi) + client IP.
+- Login: POST exactly `password` + `rtime` to `login.cgi`; session cookie `Broadcom-WebSuperSmart` (path=/) +
+  client IP. `WSSHID` (path=/login.cgi) = login token, see Sessions.
 - Budget: everything must fit the pool; upload image ≤ 0x180000 bytes. `pack` enforces both.
 
 ## New UI conventions
@@ -112,18 +113,35 @@ The switch loses ~5% of its outgoing packets and recovers only via a 1-2 s TCP r
 - Top-level pages (index, login, passwordwrong, help pop-ups) have `<link rel="icon" href="data:,">`; the switch
   has no favicon and every request costs.
 - Each headless-browser login takes one of the switch's 4 session slots until the idle timeout (no logout
-  frees it); after a few test runs the switch answers "Maximal number of logined user reached!".
+  frees it); after a few test runs the switch answers "Maximal number of logined user reached!". Unless it
+  logs in with a fixed `rtime` (or sends its old `WSSHID`): then it replaces its previous session (see Sessions).
 
 ## Flashing (findings from Ghidra)
 - Dual-bank flash (when flash >= 4 MB): banks at 0x80000 and 0x240000, 0x1c0000 each; boot code below 0x80000.
-  FUN_800a9618(0=running bank, 1=other bank, 2=boot). fupgrade writes the *other* bank, verifies the sum16, and only
-  then appends marker `AC seq_lo seq_hi 47` with seq = running+1. Running bank = higher seq (FUN_800a93bc/FUN_800a9330).
+  fw_access_open @0x800a9618 (0=running bank, 1=other bank, 2=boot). fupgrade writes the *other* bank, verifies
+  the sum16, and only then appends marker `AC seq_lo seq_hi 47` with seq = running+1. Running bank = higher seq
+  (fw_banks_probe @0x800a93bc, fw_bank_get_seq @0x800a9330; wrap: 1 beats 0x7fff).
   So a rejected/interrupted upload leaves the running image intact. CFE's own choice logic is not in this ELF (unverified).
 - Time (cgi_time @0x8008951c): the system clock holds LOCAL time. tz_set_offset_shift_clock shifts the clock by
   (new - old offset); manual mode sets the zone, then clock_set_local_time overwrites the clock with the entered
   time, so the zone never alters a manually entered time (but changing only the zone later shifts the clock).
   SNTP time (UTC) gets the zone offset added. time.cgi never reads inp3.
-- Sessions: cookie token %08X%08X from system time, bound to client IP, 4 slots (session_validate_cookie).
+- Sessions (cgi_login @0x8007c1a0): cookie `Broadcom-WebSuperSmart` = 8-hex prefix (checksum of user name +
+  password, session_init_prefix) + `%08X%08X` (session id from system time, last use); valid if a slot has that
+  id AND the client IP, and not idle too long (session_validate_cookie). 4 slots. Login token = `WSSHID` cookie
+  (hex) if sent, else the `rtime` field (decimal, page sends ms/500); a new login whose token equals an active
+  session's token preempts that session and reuses its slot (session_create_or_cookie). New tokens get
+  `Set-Cookie: WSSHID=<hex>; path=/login.cgi`. tools/flash.py uses a fixed rtime for this.
+- `tools/tftp_server.py` (sudo, port 69): receives switch uploads (File Upload > TFTP). The switch sends DATA to
+  port 69, not to the server's new transfer port (RFC 1350), so the server runs each transfer on port 69, one at a
+  time. Writes <name>.part, renames after the last block, ACKs that block only then; keeps existing files unless
+  --overwrite (tftp_root/ holds the stock recovery image). Upload only: read requests get ERROR 4.
+- Switch TFTP client = tftp_client_put @0x801e2934 (get @0x801e2428): 5 s select per ACK, gives up silently
+  (error 8, no TFTP ERROR packet) after 50 timeouts in the whole transfer (counter never reset); an ACK for another
+  block makes it resend at once without counting. With ~5% loss a 2400-block backup died after 700-1100 blocks (also
+  with the original tool). Fix in tftp_server.py: re-ACK the previous block after 1 s ("kick"), never answer
+  duplicate blocks (Sorcerer's Apprentice). Simulated 5% and 10% loss: complete, 0 switch timeouts. It sends no
+  empty final block when the size is a multiple of 512 (server then cannot detect the end).
 - `tools/flash.py IMAGE.hex [--upload]`: validates, logs in, posts to fupgrade.cgi (UI-independent recovery path).
   The switch writes flash while receiving and can stall >10 s mid-upload; requests keeps the *connect* timeout on
   the socket while sending the body, so flash.py uses timeout=(300, 900). A failed upload leaves the running bank alone.
