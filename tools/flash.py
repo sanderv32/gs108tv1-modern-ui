@@ -24,10 +24,21 @@ import gs108t_web as fw
 def login(s, base, password):
     r = s.post(base + "/login.cgi", data={"password": password, "rtime": str(time.time() * 1000 / 500)},
                allow_redirects=True, timeout=20)
+    if "maximal number" in r.text.lower():
+        sys.exit("login refused: all 4 session slots are in use. Sessions are only freed by the idle timeout\n"
+                 "(System Information > Idle timeout, 3-30 min); 'Log out' does not free one. Wait and retry.")
     page = s.get(base + "/sysInfo.html", timeout=20)
     if "inputBox_SystemName" not in page.text and "System Information" not in page.text:
-        sys.exit("login failed (wrong password, or all 4 session slots in use - log out elsewhere or wait)")
+        sys.exit("login failed: wrong password?")
     return page.text
+
+
+def upgrade_status(s, base):
+    """(current, total) from upgstatus.html; current < 0 = error, total 0 = no upgrade running."""
+    t = s.get(base + "/upgstatus.html", timeout=20).text
+    cur = re.search(r"var current = (-?\d+)", t)
+    tot = re.search(r"var total = (\d+)", t)
+    return (int(cur.group(1)), int(tot.group(1))) if cur and tot else (None, None)
 
 
 def progress(s, base, stop):
@@ -73,6 +84,9 @@ def main():
     if not a.upload:
         print("dry run: image and login are fine. Re-run with --upload to flash.")
         return
+    cur, tot = upgrade_status(s, base)
+    if tot and cur is not None and 0 <= cur < tot:
+        sys.exit("the switch reports an upgrade in progress (%d / %d bytes); wait for it or reboot first" % (cur, tot))
     if input("Flash %s (%d bytes) to %s? Type 'flash' to continue: " % (os.path.basename(a.image), len(data), base)) != "flash":
         sys.exit("aborted")
 
@@ -84,9 +98,21 @@ def main():
     print("uploading... do not power off the switch")
     t0 = time.time()
     try:
+        # urllib3 keeps the *connect* timeout on the socket while it sends the body; the read timeout
+        # only starts once the switch answers. The switch writes flash while receiving and can stall
+        # well over 10 s (erase, plus 1-2 s TCP retransmits per lost packet), so both must be long.
         r = s.post(base + "/fupgrade.cgi",
                    files={"http_dl_fname": (os.path.basename(a.image), data, "application/octet-stream")},
-                   timeout=(10, 600))
+                   timeout=(300, 900))
+    except requests.RequestException as e:
+        stop.set()
+        print("upload failed after %.0f s: %s" % (time.time() - t0, e.__class__.__name__))
+        try:
+            print("  switch upgrade status now: current %s / total %s" % upgrade_status(poller, base))
+        except requests.RequestException:
+            print("  switch does not answer right now")
+        sys.exit("The running firmware is untouched (the new bank is only marked bootable after a complete,\n"
+                 "verified image). Wait until the status above is no longer counting, then run this again.")
     finally:
         stop.set()
     text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", r.text))

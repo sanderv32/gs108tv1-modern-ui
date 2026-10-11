@@ -6,6 +6,7 @@ renders in current browsers, then flash it. Switch on the LAN: http://192.168.0.
 ## Status
 - 2026-10-10: build/GS108T-V3.0.4.10-newui-min.hex flashed to the switch (192.168.0.239); new UI confirmed running.
   Stock recovery image: tftp_root/gs108t-firmware.bin (byte-identical to Netgear's .hex).
+- 2026-10-11: build 7afa4438 (inline GIFs, ?v= cache busting, no favicon) flashed with tools/flash.py; confirmed.
 
 ## Files
 - `GS108T-V3.0.4.10.bin` – stock firmware: little-endian MIPS eCos ELF, file offset = vaddr - 0x80000000.
@@ -105,6 +106,8 @@ The switch loses ~5% of its outgoing packets and recovers only via a 1-2 s TCP r
   SNTP time (UTC) gets the zone offset added. time.cgi never reads inp3.
 - Sessions: cookie token %08X%08X from system time, bound to client IP, 4 slots (session_validate_cookie).
 - `tools/flash.py IMAGE.hex [--upload]`: validates, logs in, posts to fupgrade.cgi (UI-independent recovery path).
+  The switch writes flash while receiving and can stall >10 s mid-upload; requests keeps the *connect* timeout on
+  the socket while sending the body, so flash.py uses timeout=(300, 900). A failed upload leaves the running bank alone.
 - Build: `python3 tools/gs108t_web.py pack GS108T-V3.0.4.10.bin web -o build/X.bin --hex build/X.hex`; the diff vs
   stock must be table+pool only (no .text bytes). Running switch = vendor 3.0.4.10 image (verified via backup prefix).
 
