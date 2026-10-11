@@ -22,3 +22,7 @@ ghidra/**/application.log
 ghidra/ghidra_11.4.2_PUBLIC/FrontEndTool.xml
 ghidra/ghidra_11.4.2_PUBLIC/preferences
 ghidra/ghidra_11.4.2_PUBLIC/tools/_code_browser.tcd
+
+# Ghidra project: contains the decompiled Netgear firmware, not to be redistributed
+gs108t.gpr
+gs108t.rep/

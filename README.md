@@ -31,8 +31,8 @@ build checks that not a single byte of program code differs from Netgear's image
 - macOS or Linux with Python 3.10+.
 - The stock firmware `GS108T-V3.0.4.10.bin`; see "Getting the stock firmware" below.
 - For the dev server: a virtualenv with Flask and requests.
-- Optional: Microsoft Edge or Chrome for headless previews (`tools/preview.py`); Ghidra plus the GhidraMCP
-  bridge for reverse engineering.
+- Optional: Microsoft Edge or Chrome for headless previews (`tools/preview.py`); Ghidra plus the
+  [GhidraMCP](https://github.com/LaurieWired/GhidraMCP) bridge for reverse engineering (see below).
 
 ```
 python3 -m venv .venv
@@ -84,7 +84,7 @@ The `X-Devserver` response header tells you what happened: `rendered`, `passthro
 `switch-error`. `--dump` saves every raw switch response to `devserver-dumps/`; `--selftest` checks the
 matcher offline.
 
-Port **8088** is the default because Ghidra's MCP bridge uses 8080.
+Port **8088** is the default because the GhidraMCP bridge uses 8080.
 
 ## Editing rules
 
@@ -173,7 +173,26 @@ shasum -a 256 GS108T-V3.0.4.10.bin
   line break. The new page waits for it, strips the extra byte and verifies the image before saving it.
 - **Sessions** are bound to the client IP and limited to 4. The idle timeout logs you out.
 
+## Reverse engineering
+
+The firmware was analysed in [Ghidra](https://ghidra-sre.org/) (project `gs108t.gpr`) through
+[GhidraMCP](https://github.com/LaurieWired/GhidraMCP) by LaurieWired. GhidraMCP is a Ghidra plugin plus an MCP
+server, so an AI assistant (Claude Code here) can decompile functions, follow cross-references and rename symbols
+in the open project. It was used to work out:
+
+- the web file table and the 12-byte template records, which made `extract`/`pack` possible;
+- what individual CGI handlers do with their form fields (for example Time: `time.cgi` never reads `inp3`);
+- the upgrade path: dual flash banks, the sum16 check and the boot marker, and that an interrupted upload leaves
+  the running image alone;
+- sessions (cookie, IP binding, 4 slots) and how the clock and time zone are stored.
+
+The findings are written up in `CLAUDE.md`. The bridge listens on port 8080 by default.
+
 ## Disclaimer
 
 This is an unofficial project, not affiliated with or endorsed by Netgear. Flashing modified firmware is at
 your own risk. The stock firmware and the original web content are Netgear's; don't redistribute them.
+
+**Use at your own risk.** This software is provided "as is", without warranty of any kind. Flashing firmware can
+brick your switch, and I am not responsible for any damage to your hardware, loss of data or configuration, network
+outages, or any other consequences of using this project or its tools.
