@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>QoS Global Configuration</title>
+</head>
+<body class="ui">
+<h1>QoS Global Configuration</h1>
+<p class="lead">How traffic is classified and how the queues are served.</p>
+
+<form id="802.1ptoQueueMapping" name="frm" method="get" onsubmit="setQosCookies();return false">
+<section>
+  <h2>Quality of service <a class="help" href="javascript:void(0)" onclick="newWindow('QoSConfig_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>Classification</dt>
+    <dd class="choices">
+      <label><input type="radio" name="qostype" onclick="enableImage()"> 802.1p based</label>
+      <label><input type="radio" name="qostype" onclick="enableImage()"> DSCP based</label>
+    </dd>
+    <dt>Queue scheduler</dt>
+    <dd class="choices">
+      <label><input type="radio" name="queue" onclick="enableImage()"> Strict priority</label>
+      <label><input type="radio" name="queue" onclick="enableImage()"> Weighted round robin</label>
+    </dd>
+  </dl>
+</section>
+</form>
+
+<form name="qos" method="get" action="switchqospage.cgi">
+<input type="hidden" name="mode">
+<input type="hidden" name="sched">
+</form>
+
+<script>
+var QOSflag = {{var fn=0x80080edc id=2}};
+var Queueflag = {{var fn=0x80080edc id=3}};
+var f = document.frm;
+f.qostype[QOSflag == 0 ? 0 : 1].checked = true;
+f.queue[Queueflag == 0 ? 0 : 1].checked = true;
+
+function setQosCookies() {
+  if (!isOn('btn_Apply')) return;
+  document.qos.mode.value = f.qostype[0].checked ? 1 : 2;
+  document.qos.sched.value = f.queue[0].checked ? 1 : 3;
+  document.qos.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "QoSConfiguration.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel();', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.setQosCookies()', 'btn_Apply'));
+</script>
+</body>
+</html>

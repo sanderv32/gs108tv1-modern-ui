@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>LACP</title>
+</head>
+<body class="ui">
+<h1>LACP</h1>
+<p class="lead">Link Aggregation Control Protocol system settings.</p>
+
+<form id="lacp_sys" name="frm" method="post" action="modify_lacp.cgi" onsubmit="apply_management();return false">
+<section>
+  <h2>LACP <a class="help" href="javascript:void(0)" onclick="newWindow('lacp_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="sys_pri">System priority</label></dt>
+    <dd><input type="text" id="sys_pri" name="sys_pri" size="6" inputmode="numeric" value="{{var fn=0x8008aaf4 id=2}}" oninput="enableImage()"><span class="hint">0&ndash;65535</span></dd>
+  </dl>
+</section>
+</form>
+
+<script>
+function apply_management() {
+  var prio = document.frm.sys_pri.value;
+  if (!/^\d+$/.test(prio) || prio > 65535) {
+    alert("Priority must be between 0 and 65535");
+    return;
+  }
+  document.frm.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "lacp.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.apply_management()', 'btn_Apply'));
+</script>
+</body>
+</html>

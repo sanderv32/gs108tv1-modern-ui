@@ -163,7 +163,8 @@ def parse(blob):
 
 # ---------------------------------------------------------------- extract
 
-def extract(bin_path, out):
+def stock_tree(bin_path):
+    """(files {content id: bytes}, manifest dict) of a firmware image, in memory."""
     img = Image(open(bin_path, "rb").read())
     rows = img.table()
     by_desc = {}
@@ -173,23 +174,31 @@ def extract(bin_path, out):
     for desc, names in by_desc.items():
         pick = [n for n in names if n and not n.endswith(".cgi")] or [n for n in names if n] or ["_default"]
         ids[desc] = pick[0]
-    os.makedirs(os.path.join(out, "files"), exist_ok=True)
+    files, templates = {}, []
     for desc, cid in ids.items():
-        recs, _ = img.records(desc)
-        blob, _ = render(img, recs)
-        with open(os.path.join(out, "files", cid), "wb") as f:
-            f.write(blob)
+        files[cid], has_vars = render(img, img.records(desc)[0])
+        if has_vars:
+            templates.append(cid)
     man = dict(
         format=1,
         source=dict(file=os.path.basename(bin_path), sha256=hashlib.sha256(img.d).hexdigest()),
-        templates=sorted(cid for desc, cid in ids.items() if render(img, img.records(desc)[0])[1]),
+        templates=sorted(templates),
         entries=[dict(name=r["name"], content=ids[r["desc"]], cgi="%#x" % r["cgi"], flags="%#x" % r["flags"])
                  for r in rows],
         layout=[ids[d] for d in sorted(ids)],
     )
+    return files, man
+
+
+def extract(bin_path, out):
+    files, man = stock_tree(bin_path)
+    os.makedirs(os.path.join(out, "files"), exist_ok=True)
+    for cid, blob in files.items():
+        with open(os.path.join(out, "files", cid), "wb") as f:
+            f.write(blob)
     with open(os.path.join(out, "manifest.json"), "w") as f:
         json.dump(man, f, indent=1)
-    print("extracted %d table entries, %d files -> %s" % (len(rows), len(ids), out))
+    print("extracted %d table entries, %d files -> %s" % (len(man["entries"]), len(files), out))
 
 
 # ---------------------------------------------------------------- build-time rewrites (pack + devserver)

@@ -1,0 +1,163 @@
+gs108t-edits 1 default.css
+base 426208c1069f72dcd40731d34a50deabdea818a64d9526f37f11ee136b36c231
+result d48220259a6f0a1b188313fa7274005565399f577628f928541562eefa81bd5d
+d135 2
+a136 1
+background:url('footer_middle_bottom.gif') repeat-x top left;a684 115
+
+/* ===== Theme tokens (light default; dark via html[data-theme=dark], set by rollover.js) ===== */
+:root{--bg:#f4f6f9;--surface:#fff;--alt:#fafbfc;--head:#f4f6f9;--editrow:#f7f9fc;--line:#eef1f5;--border:#dde2ea;
+  --text:#1d2533;--muted:#647084;--accent:#2563eb;--accent-strong:#1d4ed8;--accent-soft:#e8effd;--on-accent:#fff;--sel:#e8effd;
+  --ok-strong:#16a34a;--ok-bg:#ecfdf3;--ok-text:#067647;--ok-border:#abefc6;
+  --bad-bg:#fef3f2;--bad-text:#b42318;--bad-border:#fecdca;--warn-bg:#fffaeb;--warn-text:#7a2e0e;--warn-border:#fedf89}
+html[data-theme=dark]{color-scheme:dark;--bg:#0f1419;--surface:#171c24;--alt:#1b212a;--head:#1f2630;--editrow:#1a2029;--line:#262d38;--border:#323b48;
+  --text:#e6e9ef;--muted:#98a2b3;--accent:#5b8cff;--accent-strong:#7aa2ff;--accent-soft:#1f2b46;--on-accent:#fff;--sel:#1f2b46;
+  --ok-strong:#22c55e;--ok-bg:#0f2a1c;--ok-text:#6ee7a8;--ok-border:#1d4d33;
+  --bad-bg:#2d1416;--bad-text:#ff8a80;--bad-border:#5c2326;--warn-bg:#2b2210;--warn-text:#f5c76a;--warn-border:#5a4516}
+html[data-theme=dark] body{background:var(--surface)}
+/* old pages: classes the original sheet colours explicitly */
+body:not(.ui) a{color:var(--accent)}
+
+/* ===== New UI (pages with <body class="ui">) ===== */
+.ui{margin:0;padding:20px 24px;background:var(--surface);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:auto}
+.ui *{box-sizing:border-box}
+.ui h1{margin:0 0 4px;font-size:18px;font-weight:650}
+.ui .lead{margin:0 0 20px;color:var(--muted)}
+.ui section{margin:0 0 24px}
+.ui h2{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.ui .help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--border);color:var(--muted);c684 23 1
+a684 1
+font-weight:700;c684 242 1
+a684 21
+text-transform:none;letter-spacing:0}
+.ui .help:hover{color:var(--accent);border-color:var(--accent)}
+.ui .fields{display:grid;grid-template-columns:minmax(140px,200px) 1fr;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.ui .fields>*{display:flex;align-items:center;flex-wrap:wrap;padding:9px 14px;border-top:1px solid var(--line);c684 557 1
+a684 53
+min-width:0;overflow-wrap:anywhere}
+.ui .fields>:nth-child(-n+2){border-top:0}
+.ui .fields>dt,.ui .fields>label{margin:0;color:var(--muted);font-weight:500;background:var(--alt)}
+.ui .fields>dd{margin:0}
+.ui input[type=text],.ui input[type=password],.ui select{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:6px;font:inherit;color:inherit;background:var(--surface);max-width:100%}
+.ui input[type=text]:focus,.ui select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.ui .hint{margin-left:8px;color:var(--muted);font-size:12px}
+.ui .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.ui table.grid{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.ui table.grid th,.ui table.grid td{padding:9px 14px;c684 39 1
+c684 557 1
+a684 7
+border-top:1px solid var(--line)}
+.ui table.grid th{border-top:0;background:var(--alt);color:var(--muted);font-weight:600;c684 551 1
+a684 99
+text-transform:uppercase;letter-spacing:.04em}
+@media (max-width:600px){.ui{padding:14px}.ui .fields{grid-template-columns:1fr}.ui .fields>dd,.ui .fields>input{border-top:0}}
+.ui .choices{gap:6px 20px}
+.ui .choices label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ui input:disabled{background:var(--bg);color:var(--muted);cursor:not-allowed}
+
+/* ===== Legacy skin: restyles the old (unconverted) pages in the new look ===== */
+body:not(.ui){background:var(--surface);color:var(--text);font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:auto}
+body:not(.ui) td,body:not(.ui) tr,body:not(.ui) table{font-size:13px;font-family:inherit;color:inherit}
+body:not(.ui) .mainContainer{padding:20px 24px}
+body:not(.ui) .detailsContainer,body:not(.ui) .detailsAreaContainer{width:100%;max-width:980px}
+body:not(.ui) .font15Bold{font-size:18px;font-weight:650;color:var(--text);padding:0 0 8px}
+body:not(.ui) .font10Bold,body:not(.ui) .font10Bold td{font-size:13px;font-weight:600;color:var(--text)}
+body:not(.ui) .font10,body:not(.ui) .font10 td{font-size:13px;font-weight:400}
+body:not(.ui) .grey10{color:var(--muted);font-size:12px}
+/* section frame: drop the dotted-gif borders, box the content instead */
+body:not(.ui) .subSectionBodyDot,body:not(.ui) .subSectionBodyDotRight,body:not(.ui) .subSectionBottom{background:none!important;width:0;padding:0;font-size:0;line-height:0;height:0}
+body:not(.ui) .paddingsubSectionBody,body:not(.ui) .paddingsubSectionBodyWide,body:not(.ui) .paddingsubSectionBodyRadio{padding:4px 0 8px!important}
+body:not(.ui) .lhdr{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-size:13px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+body:not(.ui) .lhdr .help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--border);color:var(--muted);c684 23 1
+a684 1
+font-weight:700;c684 242 1
+a684 177
+text-transform:none}
+body:not(.ui) .lhdr .help:hover{color:var(--accent);border-color:var(--accent)}
+/* data tables */
+body:not(.ui) .messageTableHeader,body:not(.ui) .messageTableHeaderBorder,body:not(.ui) .messageMiddleTableHeader,body:not(.ui) .messageMiddleTableHeaderBorder,body:not(.ui) .cosTableHeader,body:not(.ui) .tableField2{
+  background:var(--head)!important;color:var(--muted)!important;border:0!important;border-bottom:1px solid var(--border)!important;padding:8px 10px!important;vertical-align:middle}
+body:not(.ui) .white10Bold,body:not(.ui) .white10Bold td{color:var(--muted)!important;font-size:12px!important;font-weight:600!important}
+body:not(.ui) tr#editRow td{background:var(--editrow)!important}
+body:not(.ui) .messageTableWhite,body:not(.ui) .messageTableWhiteBorder,body:not(.ui) .cosMessageTableWhite,body:not(.ui) .messageMiddleTableWhite,body:not(.ui) .messageMiddleTableWhiteBorder,body:not(.ui) .cosMessageMiddleTableWhite{
+  background:var(--surface)!important;border:0!important;border-bottom:1px solid var(--line)!important;padding:7px 10px!important}
+body:not(.ui) .messageTableGrey,body:not(.ui) .messageTableGreyBorder,body:not(.ui) .cosMessageTableGrey,body:not(.ui) .messageMiddleTableGrey,body:not(.ui) .messageMiddleTableGreyBorder{
+  background:var(--alt)!important;border:0!important;border-bottom:1px solid var(--line)!important;padding:7px 10px!important}
+body:not(.ui) table:has(> tbody > tr > td.messageTableHeaderBorder),body:not(.ui) table:has(> tbody > tr > td.messageMiddleTableHeader){border:1px solid var(--border);border-radius:8px;border-collapse:separate;border-spacing:0;overflow:hidden}
+/* row highlight used by the selection scripts (they set these colours inline) */
+body:not(.ui) tr[style*="background"] td{background:var(--sel)!important}
+/* form controls */
+body:not(.ui) input[type=text],body:not(.ui) input[type=password],body:not(.ui) input.input,body:not(.ui) input.readonlystyle,body:not(.ui) input.inputDisabled,body:not(.ui) select{
+  height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font:13px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:var(--surface);box-sizing:border-box}
+body:not(.ui) input:focus,body:not(.ui) select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+body:not(.ui) input:disabled,body:not(.ui) select:disabled,body:not(.ui) input.inputDisabled{background:var(--bg);color:var(--muted)}
+body:not(.ui) input[type=checkbox],body:not(.ui) input[type=radio]{accent-color:var(--accent);width:15px;height:15px;vertical-align:middle}
+body:not(.ui) .padding4Top{padding-top:6px!important}
+body:not(.ui) .mainContainer,body:not(.ui) table{box-sizing:border-box}
+body:not(.ui) .mainBody{overflow-x:auto}
+.ui .empty{margin:8px 2px;color:var(--muted)}
+.ui .empty[hidden]{display:none}
+/* inline "Go" image buttons (go to interface) -> text button */
+body:not(.ui) a:has(> img[src$="go_on.gif"]){display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-weight:600;text-decoration:none}
+body:not(.ui) a:has(> img[src$="go_on.gif"]):hover{background:var(--head)}
+body:not(.ui) a:has(> img[src$="go_on.gif"])::after{content:"Go"}
+body:not(.ui) a > img[src$="go_on.gif"]{display:none}
+body:not(.ui) .spacerHeight9,body:not(.ui) .spacerHeight21,body:not(.ui) .spacerHeight5{height:4px!important;font-size:0;line-height:0}
+/* LAG / VLAN membership: header bar, unit bar, image-based port toggles */
+body:not(.ui) .cosTableHeaderText,body:not(.ui) .cosTableHeaderBorderText{background:var(--head)!important;color:var(--muted)!important;border:0!important;border-bottom:1px solid var(--border)!important;padding:8px 10px!important;font-weight:600}
+body:not(.ui) .orangeBg{background:var(--head)!important;border-bottom:1px solid var(--border);padding:6px 10px!important}
+body:not(.ui) .blue10Bold,body:not(.ui) .blue10Bold a{color:var(--text)!important;font-weight:600;text-decoration:none}
+body:not(.ui) img[src$="arrow_blue_up.gif"],body:not(.ui) img[src$="arrow_blue_down.gif"]{display:none}
+body:not(.ui) tr#unit1{display:table-row!important}
+body:not(.ui) #unit1tb td{padding:6px 4px;text-align:center}
+body:not(.ui) #unit1tb tr:first-child td{color:var(--muted);font-weight:600;font-size:12px}
+body:not(.ui) a:has(> img[name="imx"]){display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--muted);font-weight:700;c684 551 1
+c684 242 1
+c684 48 1
+a684 139
+user-select:none}
+body:not(.ui) a:has(> img[name="imx"]):hover{border-color:var(--accent)}
+body:not(.ui) a > img[name="imx"]{display:none}
+body:not(.ui) a:has(> img[name="imx"][src$="_x.gif"]){background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+body:not(.ui) a:has(> img[name="imx"][src$="_x.gif"])::after{content:"\2713"}
+body:not(.ui) a:has(> img[name="imx"][src$="_t.gif"]){background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+body:not(.ui) a:has(> img[name="imx"][src$="_t.gif"])::after{content:"T"}
+body:not(.ui) a:has(> img[name="imx"][src$="_u.gif"]){background:var(--ok-strong);border-color:var(--ok-strong);color:var(--on-accent)}
+body:not(.ui) a:has(> img[name="imx"][src$="_u.gif"])::after{content:"U"}
+body:not(.ui) a:has(> img[name="imx"][src$="_c.gif"]){background:var(--head);color:var(--muted);cursor:not-allowed}
+body:not(.ui) a:has(> img[name="imx"][src$="_c.gif"])::after{content:"\2013"}
+body:not(.ui) a:not([href]):has(> img[name="imx"]){opacity:.45;cursor:not-allowed}
+/* the "all ports" toggle in the unit bar */
+body:not(.ui) a:has(> img[name="imx"][src*="orange_"]){width:auto;padding:0 8px;height:24px}
+body:not(.ui) a:has(> img[name="imx"][src*="orange_"])::before{content:"All ";font-weight:600;margin-right:4px}
+body:not(.ui) .leftNavBg{background:var(--head)!important}
+body:not(.ui) td.leftNavBg:empty{display:none}
+body:not(.ui) .stormHint{padding:8px 10px!important;color:var(--muted);font-size:12px!important;background:var(--surface)}
+/* scripts set inline backgrounds on disabled inputs (#808080); keep the theme colours */
+body:not(.ui) input[type=text]:disabled{background:var(--bg)!important}
+body:not(.ui) input[type=text]:not(:disabled){background:var(--surface)!important}
+.ui .check{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.ui .warn{margin:12px 0 0;padding:10px 12px;border-radius:6px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);font-size:13px}
+.ui .warn[hidden],.ui .check-result[hidden],.ui .progress[hidden]{display:none}
+.ui .check-result{margin:12px 0 0;padding:10px 12px;border-radius:6px;font-size:13px;font-weight:500}
+.ui .check-result.good{background:var(--ok-bg);color:var(--ok-text);border:1px solid var(--ok-border)}
+.ui .check-result.bad{background:var(--bad-bg);color:var(--bad-text);border:1px solid var(--bad-border)}
+.ui form[name=upg] .fields{margin-top:-1px;border-top-left-radius:0;border-top-right-radius:0}
+.ui .progress{margin:14px 0 0}
+.ui .progress .bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.ui .progress .bar>div{c684 2 1
+a684 71
+width:0;background:var(--accent);transition:width .3s}
+.ui .progress.failed .bar>div{background:var(--bad-text)}
+.ui .progress p{margin:6px 0 0;color:var(--muted);font-size:13px}
+/* row selection (old scripts add " selectedRow" to cells); last so it beats the row backgrounds */
+body:not(.ui) .selectedRow,body:not(.ui) tr.selectedRow td{background:var(--sel)!important;color:var(--text)!important}
+/* result / progress pages (fdload.cgi, cdload.cgi, ...) */
+.ui .btn{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 16px;margin-top:14px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.ui .btn:hover{background:var(--bg)}
+.ui .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ui .btn:disabled{opacity:.45;cursor:default}
+.ui .status-line{display:flex;align-items:center;gap:10px;margin:4px 0 0;color:var(--muted)}
+.ui .spinner{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ui .fields .btn{margin:0 0 0 12px;height:30px}

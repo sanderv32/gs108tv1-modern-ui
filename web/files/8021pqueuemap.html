@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>802.1p to Queue Mapping</title>
+</head>
+<body class="ui">
+<h1>802.1p to Queue Mapping</h1>
+<p class="lead">Which egress queue each 802.1p priority uses.</p>
+
+<form id="802.1ptoQueueMapping" name="frm" method="get" action="dot1pqos.cgi" onsubmit="setQosCookies();return false">
+<section>
+  <h2>Priority to queue <a class="help" href="javascript:void(0)" onclick="newWindow('8021pConfig_help.html','','448','336')" title="Help">?</a></h2>
+  <table class="grid" id="tbl1">
+    <thead><tr><th>802.1p priority</th><th>Queue</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</section>
+</form>
+
+<script>
+var dot1p_config_values = [{{var fn=0x80080edc id=1}}];
+var QUEUES = ["Lowest", "Low", "Normal", "High"];
+// Eight <select name="m8021p">, in priority order 0..7 (the CGI reads them by position).
+var html = "";
+for (var i = 0; i < 8; i++) {
+  html += "<tr><td>" + i + "</td><td><select name='m8021p' onchange='enableImage()'>";
+  for (var q = 0; q < 4; q++)
+    html += "<option value='" + q + "'" + (dot1p_config_values[i] == q ? " selected" : "") + ">" + QUEUES[q] + "</option>";
+  html += "</select></td></tr>";
+}
+document.getElementById("rows").innerHTML = html;
+
+function setQosCookies() {
+  if (!isOn('btn_Apply')) return;
+  document.frm.submit();
+}
+function Cancel() {
+  if (isOn('btn_Cancel')) document.location.href = "8021pQueuemap.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel();', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.setQosCookies()', 'btn_Apply'));
+</script>
+</body>
+</html>

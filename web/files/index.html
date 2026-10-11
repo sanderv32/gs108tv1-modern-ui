@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Netgear GS108T</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --bg:#f4f6f9; --surface:#fff; --border:#dde2ea; --text:#1d2533; --muted:#647084;
+  --accent:#2563eb; --accent-soft:#e8effd; --accent-text:#1d4ed8;
+  --alt:#fafbfc; --on-accent:#fff;
+  --radius:8px; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:14px;
+}
+html[data-theme=dark]{color-scheme:dark;--bg:#0f1419;--surface:#171c24;--border:#323b48;--text:#e6e9ef;--muted:#98a2b3;
+  --accent:#5b8cff;--accent-soft:#1f2b46;--accent-text:#9db8ff;--alt:#1b212a;--shadow:0 1px 3px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);display:grid;grid-template-rows:auto 1fr;grid-template-columns:220px 1fr;grid-template-areas:"top top" "nav main"}
+
+header{grid-area:top;display:flex;align-items:center;gap:24px;padding:0 20px;height:56px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:16px;white-space:nowrap}
+.brand{color:var(--text);text-decoration:none;cursor:pointer;border-radius:6px;padding:4px 6px;margin-left:-6px}
+.brand:hover{background:var(--bg)}
+.brand small{font-weight:500;color:var(--muted);font-size:12px}
+#tabs{display:flex;gap:2px;height:100%;overflow-x:auto}
+#tabs a{display:flex;align-items:center;padding:0 14px;color:var(--muted);text-decoration:none;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer}
+#tabs a:hover{color:var(--text)}
+#tabs a.active{color:var(--accent-text);border-bottom-color:var(--accent)}
+.theme{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--muted);font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}
+.theme:hover{color:var(--text);background:var(--bg)}
+.logout{color:var(--muted);text-decoration:none;font-weight:500;padding:6px 12px;border:1px solid var(--border);border-radius:6px;white-space:nowrap}
+.logout:hover{color:var(--text);background:var(--bg)}
+
+nav{grid-area:nav;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:12px 8px}
+/* level 1: group headings and single pages, same size; level 2: pages of a group, indented */
+nav h3{display:flex;align-items:center;gap:6px;margin:6px 0 0;padding:7px 10px;font-size:14px;font-weight:600;color:var(--text);cursor:default}
+nav h3::before{content:"\25BE";font-size:11px;color:var(--muted)}
+nav > .item,nav > .group{margin-top:2px}
+nav > :first-child h3{margin-top:0}
+nav .group .item{margin-left:15px;padding-left:6px;border-left:2px solid var(--border)}
+nav .group .item a{font-size:13.5px;padding:6px 10px}
+nav .group .item:has(a.active){border-left-color:var(--accent)}
+nav .item a{display:block;padding:7px 10px;border-radius:6px;color:var(--text);text-decoration:none;cursor:pointer}
+nav .item a:hover{background:var(--bg)}
+nav .item a.active{background:var(--accent-soft);color:var(--accent-text);font-weight:600}
+
+main{grid-area:main;display:flex;flex-direction:column;min-width:0;min-height:0;padding:16px}
+.card{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+#maincontent{flex:1;width:100%;border:0;background:var(--surface)}
+.actions{display:flex;justify-content:flex-end;padding:10px 14px;border-top:1px solid var(--border);background:var(--alt)}
+.actions:has(#ButtonsDiv:empty){display:none}
+#ButtonsDiv{display:flex;gap:8px;flex-wrap:wrap}
+/* Content pages inject <a><img id="btn_X" src="x_on.gif"></a>; rollover.js swaps _on/_off to enable/disable.
+   Keep the img (scripts read its src) but show a text button instead. */
+#ButtonsDiv a{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:500;text-decoration:none;cursor:pointer;user-select:none}
+#ButtonsDiv a::after{content:attr(data-label)}
+#ButtonsDiv a:hover{background:var(--bg)}
+#ButtonsDiv a.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+#ButtonsDiv a.primary:hover{background:var(--accent-text)}
+#ButtonsDiv a.off{opacity:.5}
+#ButtonsDiv img{display:none}
+
+@media (max-width:760px){
+  body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;grid-template-areas:"top" "nav" "main"}
+  nav{border-right:0;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px;padding:8px}
+  nav h3{display:none}
+  main{padding:8px}
+}
+</style>
+<script>
+// IE-only API used throughout rollover.js: document.frames("maincontent")
+if (!document.frames) document.frames = function (n) { return window.frames[n]; };
+</script>
+<script src="rollover.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="javascript:void(0)" id="home" title="Back to System Information">GS108T <small>Smart Switch</small></a>
+  <div id="tabs"></div>
+  <button type="button" class="theme" id="themeBtn" title="Colour theme: click to switch between Auto, Light and Dark"></button>
+  <a class="logout" href="login.html" target="_top">Log out</a>
+</header>
+<nav id="TreeFrame"></nav>
+<main>
+  <div class="card">
+    <iframe id="maincontent" name="maincontent" src="about:blank" title="Page content"></iframe>
+    <div class="actions"><div id="ButtonsDiv"></div></div>
+  </div>
+</main>
+<iframe name="iw1" src="about:blank" hidden></iframe>
+<script>
+var MENU = {
+  System: [
+    ["Management", [["System Information","sysInfo.html"],["IP Configuration","managementIp.html"],["Time","time.html"]]],
+    ["SNMP", [["SNMP v1/v2","communityConfigurationBasic.html"]]],
+    ["LLDP", [["LLDP Configuration","lldp_conf_switch.html"],["LLDP Port Settings","lldp_conf_port.html"],["Local Information","lldp_local_info.html"],["Neighbors Information","lldp_msap_info.html"]]]
+  ],
+  Switching: [
+    ["Ports", [["Port Configuration","portsConfiguration.html"]]],
+    ["LAG", [["LAG Configuration","basicLAGConfiguration.html"],["LAG Membership","basicLAGMembership.html"],["LACP Configuration","lacp.html"],["LACP Port Configuration","lacpPort.html"]]],
+    ["VLAN", [["VLAN Configuration","vlanConfiguration.html"],["VLAN Membership","membership.html"],["Port PVID Configuration","portPvidSettings.html"]]],
+    ["RSTP", [["RSTP Configuration","stpConfiguration.html"],["Advanced RSTP","advancedStpConfiguration.html"],["Port Configuration","portConfiguration.html"]]],
+    ["Multicast", [["IGMP Snooping","igmpSnooping.html"],["Static Multicasting","staticMulticast.html"],["Multicast Group Membership","staticMulticastGroup.html"]]],
+    ["Switch Configuration", [["Jumbo Frames","jumboFrameConfiguration.html"]]],
+    ["Address Table", [["Static Address","static_addr.html"],["Dynamic Address","dynamic_addr.html"]]]
+  ],
+  QoS: [
+    ["QoS", [["Global Configuration","QoSConfiguration.html"],["Rate Limit","ingressRateLimit.html"],["802.1p to Queue Mapping","8021pQueuemap.html"],["DSCP Priority Mapping","DSCPQueuemap.html"]]]
+  ],
+  Security: [
+    ["Management Security", [["Change Password","changePassword.html"],["RADIUS","radius.html"],["Authentication Type","auth_type.html"]]],
+    ["Port Authentication", [["802.1X Configuration","1xConfig.html"],["Port Authentication","1xPortConfig.html"]]],
+    ["Traffic Control", [["Storm Control","stormControl.html"],["Port Security","portSecurity.html"]]],
+    ["Access", [["IP Access List","ipAccessList.html"],["Trusted MAC","trustedMAC.html"]]]
+  ],
+  Monitoring: [
+    ["Ports", [["Port Statistics","portStatistics.html"],["EAP Statistics","EAPStatistics.html"],["802.1X Accounting","1xStatistics.html"]]],
+    ["Mirroring", [["Port Mirroring","portMirroring.html"]]],
+    ["Logs", [["Log Configuration","logs_conf.html"],["Memory Logs","logs_mem.html"],["Flash Logs","logs_flash.html"],["Server Logs","logs_server.html"]]],
+    ["LLDP", [["LLDP Statistics","lldp_statistics.html"]]]
+  ],
+  Maintenance: [
+    ["Reset", [["Device Reboot","deviceReboot.html"],["Factory Default","factoryDefault.html"]]],
+    ["Upload", [["File Upload","fileUpload.html"]]],
+    ["Download", [["File Download","fileDownload.html"]]]
+  ],
+  Help: [
+    ["Online Help", [["Support","support.html"],["User Guide","userGuide.html"]]]
+  ]
+};
+
+var LABELS = {clearcounters:"Clear Counters", saveconfig:"Save", currentmembers:"Current Members",
+  taggedportmembers:"Tagged", untaggedportmembers:"Untagged", go:"Go", up:"Move Up", down:"Move Down"};
+var PRIMARY = {apply:1, add:1, login:1, continue:1, go:1};
+
+var frame = document.getElementById("maincontent");
+var buttons = document.getElementById("ButtonsDiv");
+
+function openPage(url, link) {
+  buttons.innerHTML = "";          // pages repaint their own buttons on load
+  var prev = document.querySelector("nav a.active");
+  if (prev) prev.classList.remove("active");
+  if (link) link.classList.add("active");
+  document.title = (link ? link.textContent + " \u2013 " : "") + "Netgear GS108T";
+  frame.contentWindow.location.replace(url);
+}
+
+function showSection(name) {
+  document.querySelectorAll("#tabs a").forEach(function (a) { a.classList.toggle("active", a.textContent === name); });
+  var nav = document.getElementById("TreeFrame"), html = "";
+  // Pages look links up with top.document.getElementsByName('lvl1')[n] and hide
+  // link.parentNode.parentNode, so keep <div class=item><span><a name=lvl1>.
+  // A group with one page is just that page; a section with one group needs no heading.
+  // Real groups: a muted heading with their pages indented on a guide line.
+  var groups = MENU[name], single = groups.length == 1;
+  groups.forEach(function (g) {
+    var items = g[1].map(function (p) {
+      return '<div class="item"><span><a name="lvl1" data-href="' + p[1] + '">' + p[0] + "</a></span></div>";
+    }).join("");
+    html += (g[1].length > 1 && !single) ? '<div class="group"><h3>' + g[0] + "</h3>" + items + "</div>" : items;
+  });
+  nav.innerHTML = html;
+  var first = nav.querySelector("a");
+  if (first) openPage(first.dataset.href, first);
+}
+
+document.getElementById("tabs").innerHTML = Object.keys(MENU).map(function (n) { return "<a>" + n + "</a>"; }).join("");
+document.getElementById("tabs").addEventListener("click", function (e) { if (e.target.tagName === "A") showSection(e.target.textContent); });
+document.getElementById("TreeFrame").addEventListener("click", function (e) {
+  var a = e.target.closest("a[data-href]");
+  if (a) openPage(a.dataset.href, a);
+});
+
+// Turn the image buttons pages inject into labelled text buttons.
+function decorate() {
+  buttons.querySelectorAll("img").forEach(function (img) {
+    var m = /([a-z_]+?)_(on|off)\.gif$/i.exec(img.getAttribute("src") || "");
+    var a = img.parentNode;
+    if (!m || a.tagName !== "A") return;
+    var key = m[1].toLowerCase();
+    var label = LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
+    if (a.dataset.label !== label) a.dataset.label = label;
+    a.classList.toggle("primary", !!PRIMARY[key]);
+    a.classList.toggle("off", m[2] === "off");
+    if (!a.hasAttribute("href")) a.setAttribute("role", "button");
+  });
+}
+new MutationObserver(decorate).observe(buttons, {childList: true, subtree: true, attributes: true, attributeFilter: ["src", "href"]});
+
+// Colour theme: Auto (follow the OS) -> Light -> Dark. gsTheme() lives in rollover.js.
+var THEMES = ["auto", "light", "dark"], THEME_LABEL = {auto: "\u25D0 Auto", light: "\u2600 Light", dark: "\u263E Dark"};
+function themeChoice() { try { return localStorage.getItem("gs108t-theme") || "auto"; } catch (e) { return "auto"; } }
+function applyTheme() {
+  gsTheme();
+  try { frame.contentWindow.gsTheme ? frame.contentWindow.gsTheme() : 0; } catch (e) {}
+  document.getElementById("themeBtn").textContent = THEME_LABEL[themeChoice()];
+}
+document.getElementById("themeBtn").onclick = function () {
+  var next = THEMES[(THEMES.indexOf(themeChoice()) + 1) % 3];
+  try { localStorage.setItem("gs108t-theme", next); } catch (e) {}
+  applyTheme();
+};
+if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+applyTheme();
+
+// Log out on the switch when the window closes (the original did this on unload).
+window.addEventListener("pagehide", function () {
+  try { fetch("leave_page.cgi?confirm=yes", {keepalive: true, credentials: "same-origin"}); } catch (e) {}
+});
+
+document.getElementById("home").onclick = function () { showSection("System"); };   // first page after login
+showSection("System");
+</script>
+</body>
+</html>

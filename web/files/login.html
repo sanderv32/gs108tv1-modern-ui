@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in &ndash; Netgear GS108T</title>
+<link rel="icon" href="data:,">
+<script>(function(){var t="auto";try{t=localStorage.getItem("gs108t-theme")||"auto"}catch(e){}if(t=="auto")t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t)})();</script>
+<style>
+:root{--bg:#f4f6f9;--surface:#fff;--border:#dde2ea;--text:#1d2533;--muted:#647084;--accent:#2563eb;--accent-dark:#1d4ed8;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px}
+html[data-theme=dark]{color-scheme:dark;--bg:#0f1419;--surface:#171c24;--border:#323b48;--text:#e6e9ef;--muted:#98a2b3;--accent:#5b8cff;--accent-dark:#7aa2ff;--error:#ff8a80;--error-soft:#2d1416}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;padding:16px}
+.box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(16,24,40,.08),0 8px 24px rgba(16,24,40,.06);padding:28px}
+h1{margin:0 0 4px;font-size:20px}
+.sub{margin:0 0 22px;color:var(--muted)}
+label{display:block;font-weight:600;margin-bottom:6px}
+input[type=password]{width:100%;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:6px;font:inherit;color:inherit;background:var(--surface)}
+input[type=password]:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:38px;margin-top:16px;border:0;border-radius:6px;background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--accent-dark)}
+footer{margin-top:22px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<form class="box" id="login" method="post" name="login" action="login.cgi" target="_top" onsubmit="return rlogin()">
+  <h1>GS108T</h1>
+  <p class="sub">Smart Switch management</p>
+  <label for="password">Password</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" autofocus required>
+  <input type="hidden" name="rtime">
+  <button class="btn" type="submit">Log in</button>
+  <footer>Netgear GS108T</footer>
+</form>
+<script>
+// Always show the login as the top window (old pages could load it inside a frame).
+if (window.top !== window.self) window.top.location.href = "login.html";
+function rlogin() {
+  // login.cgi reads rtime (ms / 500) as part of the session id; keep the original formula.
+  document.login.rtime.value = (new Date().getTime() / 500);
+  return true;
+}
+</script>
+</body>
+</html>

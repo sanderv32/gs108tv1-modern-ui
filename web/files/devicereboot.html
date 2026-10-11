@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>Device Reboot</title>
+</head>
+<body class="ui">
+<h1>Device Reboot</h1>
+<p class="lead">Restart the switch. Traffic stops for about a minute; saved settings are kept.</p>
+
+<form id="deviceReboot" name="frm" method="get" onsubmit="return false">
+<section>
+  <h2>Reboot <a class="help" href="javascript:void(0)" onclick="newWindow('deviceReboot_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="cb">Confirm</label></dt>
+    <dd><label class="check"><input type="checkbox" id="cb" name="CBox_12" value="checkbox" onclick="enableImage1(this)"> Reboot the switch when I press Apply</label></dd>
+  </dl>
+</section>
+</form>
+
+<form name="reset" action="restart.cgi" method="post">
+<input type="hidden" name="confirm">
+</form>
+
+<script>
+function Apply() {
+  if (!document.frm.CBox_12.checked) { alert("Tick the box first to confirm the reboot."); return; }
+  if (!confirm("The switch will reboot now. Continue?")) return;
+  document.reset.confirm.value = "yes";
+  document.reset.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "deviceReboot.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.Apply()', 'btn_Apply'));
+</script>
+</body>
+</html>

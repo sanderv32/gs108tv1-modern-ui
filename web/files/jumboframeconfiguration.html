@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>Jumbo Frames</title>
+</head>
+<body class="ui">
+<h1>Jumbo Frames</h1>
+<p class="lead">Allow frames larger than the standard 1518 bytes on all ports.</p>
+
+<form id="jumboFrameConfiguration" name="frm" method="get" onsubmit="setJumboCookies();return false">
+<section>
+  <h2>Jumbo frames <a class="help" href="javascript:void(0)" onclick="newWindow('jumboFrameConfig_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>Jumbo frames</dt>
+    <dd class="choices">
+      <label><input type="radio" name="subSection1" id="jumbo0" onclick="jumboflag=0;enableImage()"> Disable</label>
+      <label><input type="radio" name="subSection1" id="jumbo1" onclick="jumboflag=1;enableImage()"> Enable</label>
+    </dd>
+  </dl>
+</section>
+</form>
+
+<form name="jumbo" method="get" action="jumbo.cgi">
+<input type="hidden" name="enable">
+</form>
+
+<script>
+var jumboflag = {{var fn=0x80071358 id=0}};
+document.getElementById(jumboflag == 0 ? "jumbo0" : "jumbo1").checked = true;
+
+function setJumboCookies() {
+  document.jumbo.enable.value = jumboflag;
+  document.jumbo.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "jumboFrameConfiguration.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.setJumboCookies()', 'btn_Apply'));
+</script>
+</body>
+</html>

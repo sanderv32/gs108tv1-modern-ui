@@ -2,6 +2,7 @@
 """Rewrite the stock *_help.html pop-ups into the light-theme layout.
 
     python3 tools/convert_help.py            # reads stock pages from the firmware, writes web/files/
+                                             # (tools/web_sync.py does this on every run)
 
 Each stock pop-up is a fixed image-framed table; the useful parts are the title
 (<span class="popWhite10">) and the block between BEGIN/END MAIN BODY COPY. help1.html
@@ -119,25 +120,21 @@ def convert(name, src):
     raise ValueError("unknown help layout: " + name)
 
 
+def help_pages(stock):
+    """{content id: bytes} of the converted pop-ups plus pop_styles.css, from the stock files."""
+    out = {n: convert(n, src.decode("latin1")).encode("latin1") for n, src in sorted(stock.items())
+           if "help" in n and n.endswith(".html")}
+    out["pop_styles.css"] = CSS.encode()
+    return out
+
+
 def main():
-    man = json.load(open(os.path.join(ROOT, "web", "manifest.json")))
-    img = fw.Image(open(os.path.join(ROOT, "GS108T-V3.0.4.10.bin"), "rb").read())
-    stock = {}
-    for r in img.table():
-        stock.setdefault(r["name"], r["desc"])
-    names = sorted({e["content"] for e in man["entries"]
-                    if "help" in e["content"] and e["content"].endswith(".html")})
-    before = after = 0
-    for n in names:
-        src = fw.render(img, img.records(stock[n])[0])[0].decode("latin1")
-        out = convert(n, src)
-        before += len(src)
-        after += len(out)
-        with open(os.path.join(OUT, n), "w", encoding="latin1") as f:
-            f.write(out)
-    with open(os.path.join(OUT, "pop_styles.css"), "w") as f:
-        f.write(CSS)
-    print("converted %d help pages: %d KB -> %d KB" % (len(names), before // 1024, after // 1024))
+    stock, _ = fw.stock_tree(os.path.join(ROOT, "GS108T-V3.0.4.10.bin"))
+    pages = help_pages(stock)
+    for n, blob in pages.items():
+        with open(os.path.join(OUT, n), "wb") as f:
+            f.write(blob)
+    print("converted %d help pages" % (len(pages) - 1))
 
 
 if __name__ == "__main__":

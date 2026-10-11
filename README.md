@@ -8,6 +8,9 @@ the switch accepts through its normal firmware upgrade.
 Only the web content inside the firmware is replaced. **The switch software itself is unchanged**: the
 build checks that not a single byte of program code differs from Netgear's image.
 
+The repository contains no Netgear files. You download the stock firmware yourself; the build extracts the
+original pages from it and applies this project's changes (see "How web/ is built").
+
 ## What changed for the user
 
 - Modern shell: top tabs, a sidebar per section, and a button bar for Apply / Cancel.
@@ -42,6 +45,9 @@ python3 -m venv .venv
 ## Quick start
 
 ```
+# 0. put Netgear's firmware zip (or the .hex/.bin) in the project root, see "Getting the stock firmware"
+./build.sh                                          # first run also creates web/ from it
+
 # 1. develop against the real switch (no flashing needed)
 .venv/bin/python tools/devserver.py                 # http://localhost:8088
 .venv/bin/python tools/devserver.py --minify        # serve exactly what will be flashed
@@ -60,13 +66,16 @@ The switch address defaults to `http://192.168.0.239`; pass `--switch http://<ip
 
 | Path | What |
 |---|---|
-| `web/files/` | The web UI: every file the switch serves. Edit here. |
-| `web/manifest.json` | Firmware file table: name → content file, CGI handler, flags; plus pool order. |
+| `web/files/` | The web UI: every file the switch serves. Edit here. Only our own files are in git. |
+| `web/files/.gitignore` | The list of our own files (`!name`); everything else is generated. |
+| `web/edits/` | Our changes to Netgear's files, as edit scripts (no Netgear text). |
+| `web/manifest.json` | Generated: firmware file table (name → content file, CGI handler, flags) and pool order. |
+| `tools/web_sync.py` | Builds `web/` from the stock firmware plus `web/edits`; records edits. Run by `build.sh`. |
 | `tools/gs108t_web.py` | `extract`, `pack`, `verify`, `checkhex`, `unhex`: firmware ⇄ `web/`. |
 | `tools/devserver.py` | Flask dev server that serves `web/` and proxies the real switch. |
 | `tools/preview.py` | Placeholder check plus headless screenshot of pages, with sample data, without a switch. |
 | `tools/minify.py` | Conservative HTML/CSS/JS minifier used by `pack --minify` and `devserver --minify`. |
-| `tools/convert_help.py` | Regenerates the help pop-ups from the stock firmware. |
+| `tools/convert_help.py` | Converts the help pop-ups from the stock firmware (called by `web_sync.py`). |
 | `tools/flash.py` | Logs in and uploads an image to `fupgrade.cgi`, independent of the web UI. |
 | `build.sh` | Full build plus checks. |
 | `CLAUDE.md` | Detailed technical notes (firmware format, conventions, findings). |
@@ -91,8 +100,8 @@ Port **8088** is the default because the GhidraMCP bridge uses 8080.
 The firmware serves a fixed set of 387 file names, and many pages are templates whose values are filled in
 by C code. So:
 
-1. **File names cannot be added or renamed.** To drop a file, point its entry in `manifest.json` at another
-   content file (for example `_blank.gif`).
+1. **File names cannot be added or renamed.** To drop a file, point its entry at another content file
+   (as `tools/web_sync.py` does for every `*.gif` → `_blank.gif`; `manifest.json` itself is generated).
 2. **Keep every placeholder.** `{{var fn=… id=…}}` and `{{block …}} … {{/block}}` are calls into the firmware.
    They may move or repeat, but must not disappear. `tools/preview.py page.html` checks this.
 3. **Keep form field names and `.cgi` targets.** The C handlers parse them, sometimes by position (for
@@ -115,14 +124,35 @@ variables (`var(--surface)`, `var(--text)`, …), never hex values.
 The switch's network stack is slow to recover from lost packets (each loss costs 1–2 seconds), so fewer
 requests and smaller pages make the UI noticeably faster.
 
+## How web/ is built
+
+Netgear's pages must not be redistributed, so `web/` is put together on your machine by `tools/web_sync.py`
+(`./build.sh` runs it first):
+
+| Kind | Where it comes from | In git |
+|---|---|---|
+| Our own pages (index, login, the rewritten settings pages, …) | `web/files/`, listed in `web/files/.gitignore` | yes |
+| Netgear files we changed (`rollover.js`, `default.css`, `stormcontrol.html`, …) | stock file + `web/edits/<name>.edits` | only the edit script |
+| Help pop-ups, `pop_styles.css`, `manifest.json` | generated from the stock firmware | no |
+| Everything else | extracted unchanged from the stock firmware | no |
+
+An edit script refers to the stock file by position (delete these units, copy those) and only contains the
+text we added, so it carries no Netgear text. Day to day you don't see any of this: edit files in
+`web/files` as usual. When you change a Netgear file, the next `./build.sh` (or `python3 tools/web_sync.py`)
+writes or updates its edit script; commit that. When `git pull` brings a new edit script, the same command
+updates the file. If both changed, it stops and changes nothing. To take over a page completely, add
+`!<name>` to `web/files/.gitignore` and delete its edit script. Help pop-ups are generated: change
+`tools/convert_help.py`, not the pages.
+
 ## Getting the stock firmware
 
-The build needs Netgear's firmware **3.0.4.10** as `GS108T-V3.0.4.10.bin` in the project root. It must be
-exactly this version: the pack tool works with addresses inside this specific image, and `build.sh` refuses
-any other file. There are two ways to get it:
+The build needs Netgear's firmware **3.0.4.10** in the project root. It must be exactly this version: the
+pack tool works with addresses inside this specific image, and the build refuses any other file. There are
+two ways to get it:
 
 1. **From Netgear.** Download `GS108Tv1 Firmware Version 3.0.4.10.zip` from the
-   [GS108Tv1 support page](https://support.netgear.com/support/product/gs108tv1) and unzip the `.hex`.
+   [GS108Tv1 support page](https://support.netgear.com/support/product/gs108tv1) and put the zip in the
+   project root as it is. The build takes the `.hex` out of it and makes `GS108T-V3.0.4.10.bin`.
 2. **From your own switch**, if it already runs 3.0.4.10 (System → System Information shows the software
    version), via Maintenance → File Upload → Firmware:
    - **TFTP (recommended):** run a TFTP server on your computer and enter its address and a file name. The
@@ -131,7 +161,7 @@ any other file. There are two ways to get it:
      1.2 MB). It also appends one extra line break after the image; `checkhex`, `unhex` and `flash.py`
      recognise and ignore that byte.
 
-Then convert and verify it:
+The build converts a `GS108T-V3.0.4.10.hex` or the zip by itself. To do it by hand:
 
 ```
 python3 tools/gs108t_web.py checkhex GS108T-V3.0.4.10.hex          # must say OK

@@ -1,0 +1,86 @@
+gs108t-edits 1 rollover.js
+base e917b24939dfe59fd242d2f323c85eb5561a9dce4c3e238e65035f6262cc2281
+result d5e72799541d41295f3d5b08b3f3aa2e369732e08670cfcdab29347966865861
+a0 24
+/* Theme (auto/light/dark), shared by every page that loads this file. The choice lives in
+   localStorage "gs108t-theme"; colours are the tokens at the top of the new part of default.css. */
+function gsTheme(){var t="auto";try{t=localStorage.getItem("gs108t-theme")||"auto"}catch(e){}
+ if(t=="auto")t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+ document.documentElement.setAttribute("data-theme",t);return t;}
+gsTheme();
+// The content frame's window (IE had document.frames("maincontent")); inside that frame it is the page itself.
+function mainFrame(){ return (top.frames && top.frames["maincontent"]) || window; }
+d353 2
+a354 1
+var showRow='table-row'
+d395 22
+d519 45
+d572 88
+d1099 364
+d1468 1
+a1468 1
+	prntid=mainFrame().document.getElementById(tblid)
+d1484 1
+a1484 1
+	what=mainFrame().document.frm
+d1534 1
+a1534 1
+	frmObj=mainFrame().document.forms[0]
+d1560 1
+a1560 1
+	frmObj=mainFrame().document.forms[0]
+d1577 7
+d1634 1
+a1634 1
+			mainFrame().document.forms[0].elements.length
+d1636 1
+a1636 1
+j<mainFrame().document.forms[0].elements.length;d1639 1
+a1639 1
+				if(mainFrame().document.forms[0].elements[j].checked==true){d1641 1
+a1641 1
+					myRow = mainFrame().document.forms[0].elements[j].parentNode.parentNode
+d1678 94
+d1773 24
+d1841 44
+d1887 1
+a1887 1
+	mainFrame().location.reload()
+d1889 25
+d1934 39
+d1985 5
+d2291 2
+d2294 2
+c2295 2716 1
+d2297 1
+a2297 3
+	// meant as a digits-only keypress filter; pages call it onKeyUp, where only the value fix-up has an effect
+	var k=evt.which||evt.keyCode, t=evt.target;d2299 1
+a2299 1
+	if(k==8||k==9) return true;d2301 25
+a2325 4
+	if(k<48||k>57){ evt.preventDefault(); return false;d2328 2
+a2329 1
+	var num=parseInt(t.value+(k-48),10);d2331 18
+a2348 5
+	if(t.value.length>0&&num<10){ t.value=num; evt.preventDefault(); }d2352 464
+d2828 9
+a2836 12
+// Section header used by the old pages; rendered in the new style (see .lhdr in default.css).
+function tbhdrHTML(tlt,url){
+	return "<div class='lhdr'><span>"+tlt+"</span><a class='help' href='javascript:void(0)' title='Help' onClick=\"newWindow('"+url+"','','448','336')\">?</a></div>";}d2839 25
+a2863 2
+ document.write(tbhdrHTML(tlt,'help1.html#'+hlpurl)); }d2866 52
+a2917 2
+ document.write(tbhdrHTML(tlt,hlpurl+'_help.html')); }d2927 1
+a2927 1
+	return mainFrame().document.getElementById(obj)
+d2942 1
+a2942 1
+	return mainFrame().document.forms[0]}d2944 4
+d2975 41
+d3216 529
+d3748 1
+a3748 1
+	obj=mainFrame().document.frm;d3770 52
+d3834 37

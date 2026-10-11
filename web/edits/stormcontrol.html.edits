@@ -1,0 +1,28 @@
+gs108t-edits 1 stormcontrol.html
+base 96ce49d0b40dd5b106f11f4c6fd60a5426c9540606296a97f9c125a125142276
+result 1bcd2c373573fa4328505a546446f7e69451cefa45e212347605121c0589765c
+d150 1
+c150 76 2
+a150 5
+                          <td colspan="2" class="stormHint">The mode and threshold apply only to ports whose status below is <b>Enable</b>.</td>
+c150 74 2
+d789 1
+a789 8
+
+            /* storm.cgi programs the mode only into ports whose status is Enable:
+               warn when, after this apply, no port would have it */
+            var cur = type_per_port.split("."), anyOn = false;
+            for (var p = 1; p <= {{c789 793 3
+a789 6
+ p++) {
+                var on = d.CBox_1[p].checked ? d.status.value == 2 : cur[p - 1] == 1;
+                if (on) anyOn = true;
+c789 810 2
+a789 8
+            if (d.broadcastMode.value != 1 && !anyOn &&
+                !confirm("No port has storm control enabled, so this mode will not take effect " +
+                         "and the page will show \"Disable\" again after applying.\n\n" +
+                         "Select the ports under Port Settings and set their status to Enable.\n\n" +
+                         "Apply anyway?"))
+                return;
+

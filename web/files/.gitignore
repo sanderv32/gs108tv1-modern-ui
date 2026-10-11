@@ -1,0 +1,35 @@
+# web/files is built by tools/web_sync.py from the stock firmware; only our own files are tracked.
+# Everything is ignored except the files listed below with "!". To take over a page completely,
+# add it here (and delete its web/edits/<name>.edits).
+*
+!.gitignore
+!8021pqueuemap.html
+!advancedstpconfiguration.html
+!auth_type.html
+!cdload.cgi
+!cfeupgrade.cgi
+!changepassword.html
+!cuload.cgi
+!devicereboot.html
+!dispdwnstat.cgi
+!errormsg.htm
+!factorydefault.html
+!fdload.cgi
+!filedownload.html
+!fileupload.html
+!fuload.cgi
+!igmpsnooping.html
+!index.html
+!jumboframeconfiguration.html
+!lacp.html
+!login.html
+!managementip.html
+!passwordwrong.html
+!qosconfiguration.html
+!restore.cgi
+!stpconfiguration.html
+!support.html
+!sysinfo.html
+!time.html
+!userguide.html
+!_blank.gif

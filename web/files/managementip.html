@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>IP Configuration</title>
+</head>
+<body class="ui">
+<h1>IP Configuration</h1>
+<p class="lead">How the switch gets its management address.</p>
+
+<form id="managementIp" name="frm" method="get" onsubmit="apply_management();return false">
+<section>
+  <h2>Address <a class="help" href="javascript:void(0)" onclick="newWindow('ipConfiguration_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>Mode</dt>
+    <dd class="choices">
+      <label><input type="radio" name="subSection1" value="1" {{var fn=0x80088334 id=12}} onclick="update_mode(true);enableImage()"> DHCP</label>
+      <label><input type="radio" name="subSection1" value="1" {{var fn=0x80088334 id=13}} onclick="update_mode(true);enableImage()"> BootP</label>
+      <label><input type="radio" name="subSection1" {{var fn=0x80088334 id=11}} onclick="update_mode(false);enableImage()"> Static</label>
+    </dd>
+    <dt><label for="ip">IP address</label></dt>
+    <dd><input type="text" id="ip" name="serverIP" class="mono" value="{{var fn=0x80088334 id=14}}" oninput="enableImage()"></dd>
+    <dt><label for="mask">Subnet mask</label></dt>
+    <dd><input type="text" id="mask" name="serverIP" class="mono" value="{{var fn=0x80088334 id=5}}" oninput="enableImage()"></dd>
+    <dt><label for="gw">Gateway</label></dt>
+    <dd><input type="text" id="gw" name="serverIP" class="mono" value="{{var fn=0x80088334 id=6}}" oninput="enableImage()"></dd>
+  </dl>
+</section>
+
+<section>
+  <h2>Management VLAN <a class="help" href="javascript:void(0)" onclick="newWindow('mgmtVlan_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="login">VLAN ID</label></dt>
+    <dd><input type="text" id="login" name="login" size="5" inputmode="numeric" value="{{var fn=0x8008bd24 id=6}}" oninput="enableImage()"><span class="hint" id="vlanhint">1&ndash;4094, or 0 for all VLANs</span></dd>
+  </dl>
+</section>
+</form>
+
+<form name="dhcp" action="dhcp.cgi" method="post">
+<input type="hidden" name="ifname" value="{{var fn=0x80088334 id=15}}">
+<input type="hidden" name="management_vlan">
+</form>
+<form name="bootp" action="bootp.cgi" method="post">
+<input type="hidden" name="ifname" value="{{var fn=0x80088334 id=15}}">
+<input type="hidden" name="management_vlan">
+</form>
+<form name="setip" action="setip.cgi" method="post">
+<input type="hidden" name="ip">
+<input type="hidden" name="netmask">
+<input type="hidden" name="gateway">
+<input type="hidden" name="ifname" value="{{var fn=0x80088334 id=15}}">
+<input type="hidden" name="management_vlan">
+</form>
+
+<script>
+var VlanType = "{{var fn=0x8008afb0 id=2}}";   // 0: 802.1Q VLANs, otherwise port-based
+var OLD = {
+  dhcp: "{{var fn=0x80088334 id=12}}" == "checked",
+  bootp: "{{var fn=0x80088334 id=13}}" == "checked",
+  ip: "{{var fn=0x80088334 id=14}}",
+  vid: "{{var fn=0x8008bd24 id=6}}"
+};
+var f = document.frm;
+
+// Dynamic modes show the current address read-only; static makes it editable.
+function update_mode(dynamic) {
+  for (var i = 0; i < 3; i++) f.serverIP[i].disabled = dynamic;
+}
+
+f.subSection1[OLD.dhcp ? 0 : OLD.bootp ? 1 : 2].checked = true;
+update_mode(OLD.dhcp || OLD.bootp);
+
+// The management VLAN can only be set with 802.1Q VLANs.
+f.login.disabled = VlanType != 0;
+if (f.login.disabled) document.getElementById("vlanhint").textContent = "Only available with 802.1Q VLANs";
+
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.cancel_management()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.apply_management()', 'btn_Apply'));
+
+function isOn_management(id) {
+  var b = parent.document.getElementById(id);
+  return !!b && /on\.gif$/.test(b.src);
+}
+
+function cancel_management() {
+  if (!isOn_management('btn_Cancel')) return;
+  disableButton('btn_Apply', 'btn_Cancel');
+  document.location.href = "managementIp.html";
+}
+
+// Same rules as the original firmware page. Returns an error message or "".
+function checkIP(value, what, isAddress) {
+  var m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(value);
+  if (value == "0.0.0.0" || value == "255.255.255.255") return value + " is a special address and cannot be used here.";
+  if (!m) return value + " is not a valid " + what + ".";
+  var o = [+m[1], +m[2], +m[3], +m[4]];
+  if (o.some(function (x) { return x > 255; })) return value + " is not a valid " + what + ".";
+  if (isAddress) {
+    if (o[0] == 127) return value + " is a loopback address.";
+    if (o[0] == 0) return value + " is an invalid address.";
+    if (o[0] >= 224 && o[0] <= 239) return value + " is a class D (multicast) address.";
+    if (o[0] >= 240) return value + " is a class E address.";
+  }
+  if ((o[0] <= 127 && o[1] == 255 && o[2] == 255 && o[3] == 255) ||
+      (o[0] >= 128 && o[0] <= 191 && o[2] == 255 && o[3] == 255) ||
+      (o[0] >= 192 && o[0] <= 223 && o[3] == 255))
+    return value + " is not a valid " + what + ".";
+  return "";
+}
+
+function verifyStatic() {
+  var names = ["IP address", "subnet mask", "gateway"];
+  for (var i = 0; i < 3; i++) {
+    var err = checkIP(f.serverIP[i].value, names[i], i == 0);
+    if (err) { alert(err); f.serverIP[i].focus(); return false; }
+  }
+  var ip = f.serverIP[0].value.split("."), mask = f.serverIP[1].value.split("."), gw = f.serverIP[2].value.split(".");
+  for (var j = 0; j < 4; j++) {
+    if ((ip[j] & mask[j]) != (gw[j] & mask[j])) {
+      alert("The gateway must be in the same subnet as the IP address.");
+      f.serverIP[2].focus();
+      return false;
+    }
+  }
+  return true;
+}
+
+function apply_management() {
+  if (!isOn_management('btn_Apply')) return;
+  var mode = f.subSection1[0].checked ? 1 : f.subSection1[1].checked ? 2 : 3;
+  if (mode == 3 && !verifyStatic()) return;
+
+  var vid = f.login.disabled ? 9999 : f.login.value;
+  if (!f.login.disabled && !(/^\d+$/.test(vid) && vid >= 0 && vid <= 4094)) {
+    alert("VLAN " + vid + " does not exist.");
+    f.login.focus();
+    return;
+  }
+
+  var oldMode = OLD.dhcp ? 1 : OLD.bootp ? 2 : 3;
+  var changeIp = mode != oldMode || (mode == 3 && f.serverIP[0].value != OLD.ip);
+  if (!changeIp && vid == OLD.vid) { cancel_management(); return; }
+  if (changeIp && !confirm("Applying new IP settings may end your current session.\nDo you want to continue?")) {
+    cancel_management();
+    return;
+  }
+  if (changeIp) alert(mode == 3
+    ? "After applying, reconnect at http://" + f.serverIP[0].value + "/"
+    : "After applying, the switch gets a new address from the " + (mode == 1 ? "DHCP" : "BootP") + " server. Reconnect at that address.");
+
+  var target = mode == 1 ? document.dhcp : mode == 2 ? document.bootp : document.setip;
+  target.management_vlan.value = vid;
+  if (mode == 3) {
+    target.ip.value = f.serverIP[0].value;
+    target.netmask.value = f.serverIP[1].value;
+    target.gateway.value = f.serverIP[2].value;
+  }
+  disableImage();
+  disableButton('btn_Apply', 'btn_Cancel');
+  target.submit();
+}
+</script>
+</body>
+</html>

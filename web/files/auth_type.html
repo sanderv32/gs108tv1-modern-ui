@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>Authentication Type</title>
+</head>
+<body class="ui">
+<h1>Authentication Type</h1>
+<p class="lead">How web logins are checked.</p>
+
+<form id="auth" name="auth" method="post" action="authentication.cgi" onsubmit="apply_authtype();return false">
+<section>
+  <h2>Authentication <a class="help" href="javascript:void(0)" onclick="newWindow('authType_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="auth_type">Type</label></dt>
+    <dd><select id="auth_type" name="auth_type" onchange="enableImage()">
+      <option value="0">Local</option>
+      <option value="1">RADIUS</option>
+      <option value="2">RADIUS, then none</option>
+      <option value="3">RADIUS, then local</option>
+    </select></dd>
+  </dl>
+</section>
+</form>
+
+<script>
+var auth_type = {{var fn=0x8007b6fc id=0}};
+document.auth.auth_type.selectedIndex = auth_type;
+
+function apply_authtype() {
+  if (document.auth.auth_type.value == 1 &&
+      !confirm("Make sure a RADIUS server is reachable. Otherwise nobody can log in to this web interface " +
+               "until the switch is reset to factory defaults.\n\nDo you want to continue?"))
+    return;
+  document.auth.submit();
+}
+function cancel() {
+  disableImage();
+  disableButton('btn_Apply', 'btn_Cancel');
+  document.location.href = "auth_type.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.cancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.apply_authtype()', 'btn_Apply'));
+</script>
+</body>
+</html>

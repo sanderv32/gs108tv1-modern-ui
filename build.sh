@@ -3,7 +3,8 @@
 #
 #   ./build.sh            -> build/GS108T-V3.0.4.10-newui-min.hex  (minified, the one to flash)
 #                            build/GS108T-V3.0.4.10-newui.hex      (not minified, fallback)
-#   ./build.sh --help-pages   also regenerate the help pop-ups from the stock firmware first
+# First syncs web/ with the stock firmware (tools/web_sync.py): creates it in a fresh clone, records
+# edits to Netgear's files as web/edits/*.edits, regenerates the help pop-ups.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -11,16 +12,10 @@ STOCK=GS108T-V3.0.4.10.bin
 OUT=build/GS108T-V3.0.4.10-newui
 PY=python3
 
-# The pack tool's addresses (file table, web pool) are only valid for this exact firmware.
-STOCK_SHA256=bb1dd3e062891a923599f9575096904420e9fde3156c3426d54c2f2b6b5f8951
-[[ -f "$STOCK" ]] || { echo "missing $STOCK (see README: Getting the stock firmware)"; exit 1; }
-if [[ "$($PY -I -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" "$STOCK")" != "$STOCK_SHA256" ]]; then
-  echo "FAIL: $STOCK is not the stock GS108T v1 3.0.4.10 firmware (SHA-256 mismatch)"; exit 1
-fi
-
-if [[ "${1:-}" == "--help-pages" ]]; then
-  $PY -I tools/convert_help.py
-fi
+# Checks the stock firmware (making the .bin from the .hex or Netgear's zip if needed), then
+# brings web/ up to date. The pack tool's addresses only fit this exact firmware.
+echo "== web/ sync"
+$PY -I tools/web_sync.py
 
 # Build stamp shown under System Information > Versions > Web interface
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then

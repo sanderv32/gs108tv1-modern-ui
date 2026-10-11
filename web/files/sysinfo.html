@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>System Information</title>
+</head>
+<body class="ui">
+<h1>System Information</h1>
+<p class="lead">Switch identity, management address and firmware.</p>
+
+<form id="sysInfo" name="frm" method="get" onsubmit="apply_Sysinfo();return false">
+<section>
+  <h2>Switch status <a class="help" href="javascript:void(0)" onclick="newWindow('sysInfo_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>Product name</dt><dd>{{var fn=0x80088234 id=0}}</dd>
+    <dt><label for="inputBox_SystemName">System name</label></dt>
+    <dd><input type="text" id="inputBox_SystemName" name="inputBox_SystemName" maxlength="20" value="{{var fn=0x80088334 id=0}}" oninput="enableImage()"></dd>
+    <dt><label for="inputBox_LocationName">System location</label></dt>
+    <dd><input type="text" id="inputBox_LocationName" name="inputBox_LocationName" maxlength="20" value="{{var fn=0x80088334 id=1}}" oninput="enableImage()"></dd>
+    <dt><label for="login">Idle timeout</label></dt>
+    <dd><input type="text" id="login" name="login" size="4" inputmode="numeric" value="{{var fn=0x80088f48 id=2}}" oninput="enableImage()"><span class="hint">minutes (3&ndash;30)</span></dd>
+    <dt>DHCP</dt><dd>{{var fn=0x80088334 id=3}}</dd>
+    <dt>IP address</dt><dd class="mono">{{var fn=0x80088334 id=4}}</dd>
+    <dt>Subnet mask</dt><dd class="mono">{{var fn=0x80088334 id=5}}</dd>
+    <dt>Default gateway</dt><dd class="mono">{{var fn=0x80088334 id=6}}</dd>
+    <dt>MAC address</dt><dd class="mono">{{var fn=0x80088334 id=7}}</dd>
+    <dt>Uptime</dt><dd>{{var fn=0x80088f48 id=8}}</dd>
+  </dl>
+</section>
+
+<section>
+  <h2>Versions <a class="help" href="javascript:void(0)" onclick="newWindow('version_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>Model</dt><dd>{{var fn=0x80088234 id=0}}</dd>
+    <dt>Hardware</dt><dd>1.0.0.1</dd>
+    <dt>Boot</dt><dd>{{var fn=0x8008824c id=9}}</dd>
+    <dt>Software</dt><dd>{{var fn=0x8008824c id=10}}</dd>
+    <dt>Web interface</dt><dd class="mono">@@UI_VERSION@@</dd>
+  </dl>
+</section>
+</form>
+
+<form name="sysinfo_apply" action="sysinfo_apply.cgi" method="post">
+<input type="hidden" name="system_name">
+<input type="hidden" name="location_name">
+<input type="hidden" name="login_timeout">
+</form>
+
+<script>
+// Cancel / Apply live in the shell's button bar and call back into this frame.
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.onCancel_sysinfo()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.apply_Sysinfo()', 'btn_Apply'));
+
+function isOn_sysinfo(id) {
+  var b = parent.document.getElementById(id);
+  return !!b && /on\.gif$/.test(b.src);
+}
+
+function onCancel_sysinfo() {
+  if (!isOn_sysinfo('btn_Cancel')) return;
+  disableButton('btn_Apply', 'btn_Cancel');
+  document.location.href = "sysInfo.html";
+}
+
+function apply_Sysinfo() {
+  if (!isOn_sysinfo('btn_Apply')) return;
+  var f = document.frm;
+  if (!stringSizeCheck(f.inputBox_SystemName.value, f.inputBox_SystemName.maxLength, f.inputBox_SystemName.id, "System Name")) return;
+  if (!stringSizeCheck(f.inputBox_LocationName.value, f.inputBox_LocationName.maxLength, f.inputBox_LocationName.id, "Location Name")) return;
+  var t = Number(f.login.value);
+  if (!/^\d+$/.test(f.login.value) || t < 3 || t > 30) {
+    alert('Login Timeout value must be between 3 and 30');
+    f.login.focus();
+    return;
+  }
+  disableImage();
+  disableButton('btn_Apply', 'btn_Cancel');
+  var a = document.sysinfo_apply;
+  a.system_name.value = f.inputBox_SystemName.value;
+  a.location_name.value = f.inputBox_LocationName.value;
+  a.login_timeout.value = f.login.value;
+  a.submit();
+}
+</script>
+</body>
+</html>

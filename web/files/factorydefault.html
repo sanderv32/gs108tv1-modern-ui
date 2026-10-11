@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>Factory Default</title>
+</head>
+<body class="ui">
+<h1>Factory Default</h1>
+<p class="lead">Erase all settings and reboot. The switch comes back with the default IP and password.</p>
+
+<form id="factoryDefault" name="frm" method="get" onsubmit="return false">
+<section>
+  <h2>Reset to defaults <a class="help" href="javascript:void(0)" onclick="newWindow('factoryDefault_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="cb">Confirm</label></dt>
+    <dd><label class="check"><input type="checkbox" id="cb" name="CBox_12" value="checkbox" onclick="enableImage1(this)"> Erase all settings and reboot when I press Apply</label></dd>
+  </dl>
+  <p class="warn">All configuration (VLANs, IP address, password, &hellip;) will be lost. Make a backup first under Maintenance &rarr; File Upload.</p>
+</section>
+</form>
+
+<form name="restore" action="restored.cgi" method="post">
+<input type="hidden" name="val">
+</form>
+
+<script>
+function Apply() {
+  if (!document.frm.CBox_12.checked) { alert("Tick the box first to confirm the reset."); return; }
+  if (!confirm("All settings will be erased and the switch will reboot. Continue?")) return;
+  document.restore.val.value = "2";
+  document.restore.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "factoryDefault.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.Apply()', 'btn_Apply'));
+</script>
+</body>
+</html>

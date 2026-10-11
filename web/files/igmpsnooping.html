@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>IGMP Snooping</title>
+</head>
+<body class="ui">
+<h1>IGMP Snooping</h1>
+<p class="lead">Forward multicast only to ports that joined the group.</p>
+
+<form name="form_igmp" id="form_igmp" method="get" onsubmit="igmp_set_cookie();return false">
+<section>
+  <h2>IGMP snooping <a class="help" href="javascript:void(0)" onclick="newWindow('igmpSnoop_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>IGMP snooping</dt>
+    <dd class="choices">
+      <label><input type="radio" name="igmp_status" value="0" onclick="enableLeave(false);enableImage2()"> Disable</label>
+      <label><input type="radio" name="igmp_status" value="1" onclick="enableLeave(true);enableImage2()"> Enable</label>
+    </dd>
+    <dt class="leave">Block leave packets</dt>
+    <dd class="choices leave">
+      <label><input type="radio" name="igmp_leave" value="0" onclick="enableImage2()"> Disable</label>
+      <label><input type="radio" name="igmp_leave" value="1" onclick="enableImage2()"> Enable</label>
+    </dd>
+    <dt>Block unknown multicast</dt>
+    <dd class="choices">
+      <label><input type="radio" name="igmp_addr" value="0" onclick="enableImage2()"> Disable</label>
+      <label><input type="radio" name="igmp_addr" value="1" onclick="enableImage2()"> Enable</label>
+    </dd>
+  </dl>
+</section>
+
+<section id="dynamic" hidden>
+  <h2>Dynamic multicast groups <a class="help" href="javascript:void(0)" onclick="newWindow('dynamicMulticasting_help.html','','448','336')" title="Help">?</a></h2>
+  <table class="grid" id="tbl1">
+    <thead><tr><th>#</th><th>VLAN</th><th>Multicast group</th><th>Port members</th></tr></thead>
+    <tbody>
+{{block fn=0x80070d20 id=0}}      <tr><td class="n"></td><td>{{var fn=0x80070a00 id=2 kind=0x22}}</td><td class="mono">{{var fn=0x80070a00 id=3 kind=0x22}}</td><td>{{var fn=0x80070a00 id=4 kind=0x22}}</td></tr>
+{{/block}}    </tbody>
+  </table>
+  <p class="empty">No multicast groups learned.</p>
+</section>
+</form>
+
+<form name="snooping" method="get" action="igmpsnoopnew.cgi">
+<input type="hidden" name="snooping">
+<input type="hidden" name="block_leave">
+<input type="hidden" name="blockunknownmcast">
+</form>
+
+<script>
+var snooping_enabled = "{{var fn=0x80070c50 id=0}}";
+var leave_enabled = "{{var fn=0x80070c50 id=1}}";
+var unknown_blocked = "{{var fn=0x8007e0e4 id=5}}";
+var d = document.form_igmp;
+
+// "Block leave" only applies while snooping is on.
+function enableLeave(on) {
+  document.querySelectorAll(".leave").forEach(function (e) { e.style.display = on ? "" : "none"; });
+  d.igmp_leave[on && leave_enabled == "checked" ? 1 : 0].checked = true;
+}
+
+d.igmp_status[snooping_enabled == "checked" ? 1 : 0].checked = true;
+enableLeave(snooping_enabled == "checked");
+d.igmp_addr[unknown_blocked == "checked" ? 1 : 0].checked = true;
+
+// Group table: shown when snooping is on; number the rows.
+if (snooping_enabled == "checked") {
+  var rows = document.querySelectorAll("#tbl1 tbody tr");
+  rows.forEach(function (r, i) { r.cells[0].textContent = i + 1; });
+  document.querySelector("#dynamic .empty").hidden = rows.length > 0;
+  document.getElementById("dynamic").hidden = false;
+}
+
+function igmp_set_cookie() {
+  if (!isOn('btn_Apply')) return;
+  var s = document.snooping, on = d.igmp_status[1].checked;
+  s.snooping.value = on ? 1 : 0;
+  s.block_leave.value = on && d.igmp_leave[1].checked ? 1 : 0;
+  s.blockunknownmcast.value = d.igmp_addr[1].checked ? 1 : 0;
+  s.submit();
+}
+function igmp_onCancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "igmpSnooping.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.igmp_onCancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.igmp_set_cookie()', 'btn_Apply'));
+</script>
+</body>
+</html>

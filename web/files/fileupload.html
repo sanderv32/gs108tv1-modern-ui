@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>File Upload</title>
+</head>
+<body class="ui">
+<h1>File Upload</h1>
+<p class="lead">Back up the configuration or firmware <em>from</em> the switch.</p>
+
+<form id="fileDownload" name="frm" method="post" onsubmit="apply();return false">
+<section>
+  <h2>Backup <a class="help" href="javascript:void(0)" onclick="newWindow('fileUpload_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="file_type">File</label></dt>
+    <dd><select id="file_type" name="file_type" onchange="change_tftp_info();enableImage()">
+      <option value="0" selected>Configuration</option>
+      <option value="1">Firmware</option>
+    </select></dd>
+    <dt>Method</dt>
+    <dd class="choices">
+      <label><input type="radio" name="up_mode" id="tftp" value="0" {{var fn=0x8006ee7c id=8 arg=9}} onclick="tftp_table_display(true);enableImage2()"> TFTP server</label>
+      <label><input type="radio" name="up_mode" id="http" value="1" {{var fn=0x8006ee7c id=8 arg=10}} onclick="tftp_table_display(false);enableImage2()"> Download to this computer</label>
+    </dd>
+    <dt class="tftp"><label for="server_ip">TFTP server</label></dt>
+    <dd class="tftp"><input type="text" id="server_ip" name="server_ip" class="mono" oninput="enableImage()"></dd>
+    <dt class="tftp"><label for="file_name">Destination file name</label></dt>
+    <dd class="tftp"><input type="text" id="file_name" name="file_name" oninput="enableImage()"></dd>
+  </dl>
+  <p class="check-result" id="dlStatus" hidden></p>
+</section>
+</form>
+
+<form name="fmgmt1" method="post" action="fuload.cgi">
+<input type="hidden" name="ipaddr1">
+<input type="hidden" name="dfname5">
+</form>
+<form name="fmgmt2" method="post" action="cuload.cgi">
+<input type="hidden" name="ipaddr2">
+<input type="hidden" name="dfname6">
+</form>
+
+<script>
+var f_type = "{{var fn=0x8006ee7c id=3 arg=4}}";
+var f = document.frm;
+// Saved TFTP server / file name per file type (configuration, firmware).
+var TFTP = {
+  cfg: ["{{var fn=0x8006ee7c id=5 arg=4}}", "{{var fn=0x8006ee7c id=6 arg=4}}"],
+  fware: ["{{var fn=0x8006ee7c id=5 arg=7}}", "{{var fn=0x8006ee7c id=6 arg=7}}"]
+};
+
+function update_tftp_info(t) { f.server_ip.value = TFTP[t][0]; f.file_name.value = TFTP[t][1]; }
+function change_tftp_info() { update_tftp_info(f.file_type.value == 0 ? 'cfg' : 'fware'); }
+function tftp_table_display(on) {
+  document.querySelectorAll(".tftp").forEach(function (e) { e.style.display = on ? "" : "none"; });
+}
+
+function checkIPAddress(ip) {
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) return false;
+  var p = ip.split(".").map(Number);
+  return p[0] != 0 && p.every(function (x) { return x <= 255; });
+}
+
+
+// ---- Firmware image check: the same rules the switch applies (cgi_fupgrade_app / FUN_800a8fd0 / FUN_800a9214).
+function checkImage(buf) {
+  var b = new Uint8Array(buf), FNAME = "_GS108Tv1h1_bcm.robo_";
+  if (b.length > 0x180000) return "File is larger than the 1.5 MB the switch accepts.";
+  if (b[0] != 0x1f || b[1] != 0x8b || b[2] != 0x08 || b[3] != 0x18) return "Not a GS108T firmware image (wrong file header). Use the .hex file, not the .bin or .zip.";
+  var o = 10, name = "";
+  while (o < b.length && b[o]) name += String.fromCharCode(b[o++]);
+  if (name != FNAME) return "This image is for another model (" + name + ").";
+  var c = "", s = ++o;
+  while (o < b.length && b[o]) c += String.fromCharCode(b[o++]);
+  if (!/^[0-9A-Fa-f]{12}$/.test(c)) return "Image header is damaged (bad checksum field).";
+  o++;
+  var len = parseInt(c.slice(0, 8), 16), sum = parseInt(c.slice(8), 16);
+  if (len != b.length - o) return "Image is truncated or has extra data (" + (b.length - o) + " bytes, header says " + len + ").";
+  var t = 0;
+  for (var i = o; i < b.length; i++) t += b[i];
+  if ((t & 0xffff) != sum) return "Image checksum does not match; the file is damaged.";
+  return "";
+}
+
+// HTTP backup: fetch the file the switch generates and save it. Using fetch keeps this page
+// in place (no frame navigation) and lets us report failures.
+function download(url, name) {
+  var st = document.getElementById("dlStatus");
+  st.className = "check-result"; st.textContent = "Downloading " + name + "\u2026" + (name.indexOf("firmware") >= 0 ? " The switch sends this slowly; it can take about 10 minutes." : ""); st.hidden = false;
+  fetch(url, {credentials: "same-origin", cache: "no-store"}).then(function (r) {
+    if (!r.ok) throw new Error("the switch answered " + r.status);
+    return r.blob();
+  }).then(function (b) {
+    if (name.indexOf("firmware") < 0) return b;
+    // Firmware: the switch sends no usable length, so verify the image against its own header.
+    return b.arrayBuffer().then(function (buf) {
+      var u = new Uint8Array(buf);
+      if (u.length && u[u.length - 1] == 10) { buf = buf.slice(0, buf.byteLength - 1); b = new Blob([buf]); } // switch appends "\n"
+      var err = checkImage(buf);
+      if (err) throw new Error("the file is incomplete or damaged (" + buf.byteLength + " bytes received): " + err);
+      return b;
+    });
+  }).then(function (b) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(b); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+    st.className = "check-result good"; st.textContent = "Saved " + name + " (" + b.size + " bytes).";
+  }).catch(function (e) {
+    st.className = "check-result bad"; st.textContent = "Download failed: " + e.message + ".";
+  });
+}
+
+function apply() {
+  var fw = f.file_type.value == 1;
+  if (document.getElementById("tftp").checked) {
+    if (!checkIPAddress(f.server_ip.value)) { alert("Invalid IP address"); return; }
+    if (f.file_name.value == "") { alert("Enter a file name."); return; }
+    var m = fw ? document.fmgmt1 : document.fmgmt2;
+    if (fw) { m.ipaddr1.value = f.server_ip.value; m.dfname5.value = f.file_name.value; }
+    else    { m.ipaddr2.value = f.server_ip.value; m.dfname6.value = f.file_name.value; }
+    m.submit();
+  } else if (fw) {
+    download("firmware.bin", "GS108T-firmware.bin");
+  } else {
+    download("gs108t.cfg", "gs108t.cfg");
+  }
+}
+
+tftp_table_display("{{var fn=0x8006ee7c id=8 arg=9}}" == "checked");
+if (!document.getElementById("tftp").checked && !document.getElementById("http").checked)
+  document.getElementById("http").checked = true;
+update_tftp_info('cfg');
+PaintButtons(CreateEditblBtns('Apply', 'parent.maincontent.apply()', 'btn_Apply'));
+enableButton('btn_Apply');
+</script>
+</body>
+</html>

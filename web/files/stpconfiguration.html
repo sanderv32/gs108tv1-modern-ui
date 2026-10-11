@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>RSTP Configuration</title>
+</head>
+<body class="ui">
+<h1>RSTP Configuration</h1>
+<p class="lead">Rapid Spanning Tree Protocol on or off.</p>
+
+<form id="stpConfiguration" name="frm" method="get" action="rstpset.cgi" onsubmit="setSTP();return false">
+<section>
+  <h2>RSTP <a class="help" href="javascript:void(0)" onclick="newWindow('RstpConfig_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>RSTP</dt>
+    <dd class="choices">
+      <label><input type="radio" name="stpstate" value="0" onclick="stp(0);enableImage2()"> Disable</label>
+      <label><input type="radio" name="stpstate" value="1" onclick="stp(1);enableImage2()"> Enable</label>
+    </dd>
+    <dt class="bpdu">Forward RSTP BPDUs</dt>
+    <dd class="choices bpdu">
+      <label><input type="radio" name="fwd_bpdu" value="0" onclick="enableImage2()"> Disable</label>
+      <label><input type="radio" name="fwd_bpdu" value="1" onclick="enableImage2()"> Enable</label>
+      <span class="hint">only when RSTP is disabled</span>
+    </dd>
+  </dl>
+</section>
+</form>
+
+<script>
+var STPflag = {{var fn=0x8008524c id=0 arg=255}};
+var bpdu_status = "{{var fn=0x8008524c id=1 arg=255}}";
+var f = document.frm;
+
+// BPDU forwarding is only configurable while RSTP is disabled.
+function stp(val) {
+  var show = val != 1;
+  document.querySelectorAll(".bpdu").forEach(function (e) { e.style.display = show ? "" : "none"; });
+  if (show) f.fwd_bpdu[bpdu_status == '0' ? 0 : 1].checked = true;
+}
+
+f.stpstate[STPflag == '0' ? 0 : 1].checked = true;
+stp(STPflag == '0' ? 0 : 1);
+
+function setSTP() {
+  if (!isOn('btn_Apply')) return;
+  f.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "stpConfiguration.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel();', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.setSTP()', 'btn_Apply'));
+</script>
+</body>
+</html>

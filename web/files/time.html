@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>Time</title>
+</head>
+<body class="ui" onload="init()">
+<h1>Time</h1>
+<p class="lead">Clock source, date, time and time zone.</p>
+
+<form id="Time" name="time" method="get" onsubmit="apply();return false">
+<section>
+  <h2>Clock <a class="help" href="javascript:void(0)" onclick="newWindow('time_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>Clock source</dt>
+    <dd class="choices">
+      <label><input type="radio" name="time_set_method" id="clk" onclick="enable('clock');enableImage()"> Local</label>
+      <label><input type="radio" name="time_set_method" id="snt" onclick="enable('sntp');enableImage()"> SNTP</label>
+    </dd>
+    <dt><label for="date">Date</label></dt>
+    <dd><input type="text" id="date" name="date" class="mono" size="11" value="{{var fn=0x80089a18 id=1}}" onfocus="date_change()" oninput="enableImage()"><span class="hint">DD/MM/YYYY</span></dd>
+    <dt><label for="time_disp">Local time</label></dt>
+    <dd><input type="text" id="time_disp" name="local_time" class="mono" size="9" value="{{var fn=0x80089a18 id=0}}" onfocus="time_change()" oninput="enableImage()"><span class="hint">HH:MM:SS</span>
+        <button type="button" class="btn" id="syncBtn" onclick="syncBrowserTime()">Use this computer&rsquo;s time</button></dd>
+    <dt><label for="zone">Time zone</label></dt>
+    <dd><select id="zone" name="zone" onchange="enableImage()">
+{{block fn=0x800894e8 id=0}}<option value="{{var fn=0x80089a18 id=4 kind=0x22}}">{{var fn=0x80089a18 id=5 kind=0x22}}</option>
+{{/block}}</select></dd>
+  </dl>
+</section>
+
+<section>
+  <h2>SNTP servers</h2>
+  <dl class="fields">
+    <dt><label for="serv_ip1">Server 1</label></dt>
+    <dd><input type="text" id="serv_ip1" name="serv_ip1" class="mono" value="{{var fn=0x80089a18 id=6}}" oninput="enableImage()">
+        <label class="hint"><input type="checkbox" name="delete_serv1" onclick="check('del1');enableImage()"> Delete</label></dd>
+    <dt><label for="serv_ip2">Server 2</label></dt>
+    <dd><input type="text" id="serv_ip2" name="serv_ip2" class="mono" value="{{var fn=0x80089a18 id=7}}" oninput="enableImage()">
+        <label class="hint"><input type="checkbox" name="delete_serv2" onclick="check('del2');enableImage()"> Delete</label></dd>
+  </dl>
+</section>
+</form>
+
+<form action="time.cgi" method="post" name="timepst">
+<input type="hidden" name="flag">
+<input type="hidden" name="tzone">
+<input type="hidden" name="inp1">
+<input type="hidden" name="inp2">
+<input type="hidden" name="inp3">
+</form>
+
+<script>
+var time_change_flag = 0, date_change_flag = 0;
+var tvalue = "{{var fn=0x80089a18 id=0}}";
+var dvalue = "{{var fn=0x80089a18 id=1}}";
+var timerkey, dateobj;
+var f = document.time;
+
+function time_change() { clearInterval(timerkey); time_change_flag = 1; }
+function date_change() { date_change_flag = 1; }
+
+function check(opt) {
+  if (opt == "del1") f.serv_ip1.disabled = f.delete_serv1.checked;
+  if (opt == "del2") f.serv_ip2.disabled = f.delete_serv2.checked;
+}
+
+function padzero(v) { return (v < 10 ? "0" : "") + v; }
+
+// Tick the displayed clock locally, starting from the switch's time.
+function updatetime() {
+  if (!dateobj) return;
+  var d = dateobj;
+  d.setSeconds(d.getSeconds() + 1);
+  f.local_time.value = padzero(d.getHours()) + ":" + padzero(d.getMinutes()) + ":" + padzero(d.getSeconds());
+  if (date_change_flag == 0)
+    f.date.value = padzero(d.getDate()) + "/" + padzero(d.getMonth() + 1) + "/" + d.getFullYear();
+}
+
+function init_date() {
+  var t = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(tvalue), d = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dvalue);
+  if (t && d) dateobj = new Date(d[3], d[2] - 1, d[1], t[1], t[2], t[3]);
+}
+
+function checkDate(field) {
+  var r = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(field.value), err = "";
+  if (field.value != "") {
+    if (!r) err = "Invalid date format: " + field.value;
+    else if (r[1] < 1 || r[1] > 31) err = "Invalid value for day: " + r[1];
+    else if (r[2] < 1 || r[2] > 12) err = "Invalid value for month: " + r[2];
+    else if (r[3] < 1970) err = "Invalid value for year: " + r[3] + " - must be greater than 1970";
+    else if (r[3] > 2037) err = "Invalid value for year: " + r[3] + " - must be less than 2037";
+  }
+  if (err) { alert(err); field.focus(); return false; }
+  return true;
+}
+
+function checkTime(s) {
+  var m = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(s);
+  if (!m) { alert("Time should be in HH:MM:SS format."); return false; }
+  if (m[1] > 23) { alert("Hour must be between 0 and 23"); return false; }
+  if (m[2] > 59) { alert("Minute must be between 0 and 59."); return false; }
+  if (m[3] > 59) { alert("Second must be between 0 and 59."); return false; }
+  return true;
+}
+
+// Rejects 0.x.x.x, 255.255.255.0, 255.255.255.255 and class D, like the original page.
+function checkIPAddress(ip) {
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) return false;
+  var p = ip.split(".").map(Number);
+  if (p[0] == 0 || p.some(function (x) { return x > 255; })) return false;
+  if (p[0] == 255 && p[1] == 255 && p[2] == 255 && (p[3] == 0 || p[3] == 255)) return false;
+  return (p[0] & 0xf0) != 0xe0;
+}
+
+function enable(val) {
+  var sntp = val == "sntp";
+  f.serv_ip1.disabled = f.serv_ip2.disabled = f.delete_serv1.disabled = f.delete_serv2.disabled = !sntp;
+  f.date.disabled = f.local_time.disabled = sntp;
+  document.getElementById("syncBtn").disabled = sntp;   // only meaningful for the local clock
+  (sntp ? f.snt : f.clk).checked = true;
+}
+
+function init() {
+  var sntp_en = {{var fn=0x80089a18 id=2}};
+  f.zone.selectedIndex = "{{var fn=0x80089a18 id=3}}";
+  enable(sntp_en == 0 ? "clock" : "sntp");
+  init_date();
+  updatetime();
+  timerkey = setInterval(updatetime, 1000);
+}
+
+function apply() {
+  var p = document.timepst;
+  if (f.zone.selectedIndex == 0) { alert("Select a time zone."); return; }
+  if (f.clk.checked) {
+    if (browser_sync) fillBrowserTime();
+    if (!checkDate(f.date) || !checkTime(f.local_time.value)) return;
+    p.flag.value = 0;
+    p.inp1.value = f.date.value;
+    p.inp2.value = f.local_time.value;
+    p.tzone.value = f.zone.value;
+    p.inp3.value = (time_change_flag == 1 || date_change_flag == 1 || browser_sync == 1) ? 1 : 0;
+  } else {
+    if (f.delete_serv1.checked || f.serv_ip1.disabled) { f.serv_ip1.value = ""; f.delete_serv1.checked = false; f.serv_ip1.disabled = false; }
+    if (f.delete_serv2.checked || f.serv_ip2.disabled) { f.serv_ip2.value = ""; f.delete_serv2.checked = false; f.serv_ip2.disabled = false; }
+    if (f.serv_ip1.value == "" && f.serv_ip2.value == "") { alert("Enter at least one SNTP server address."); return; }
+    if (f.serv_ip1.value == f.serv_ip2.value) { alert("Server 1 and server 2 are the same address."); return; }
+    if (f.serv_ip1.value != "" && !checkIPAddress(f.serv_ip1.value)) { alert("Server 1 IP address is invalid."); return; }
+    if (f.serv_ip2.value != "" && !checkIPAddress(f.serv_ip2.value)) { alert("Server 2 IP address is invalid."); return; }
+    p.flag.value = 1;
+    p.inp1.value = f.serv_ip1.value;
+    p.inp2.value = f.serv_ip2.value;
+    p.tzone.value = f.zone.value;
+  }
+  p.submit();
+}
+
+// "Use this computer's time": switch to local clock, show the browser's time ticking, and send it on Apply.
+var browser_sync = 0;
+function fillBrowserTime() {
+  var d = new Date();
+  f.date.value = padzero(d.getDate()) + "/" + padzero(d.getMonth() + 1) + "/" + d.getFullYear();
+  f.local_time.value = padzero(d.getHours()) + ":" + padzero(d.getMinutes()) + ":" + padzero(d.getSeconds());
+}
+function syncBrowserTime() {
+  enable("clock");
+  browser_sync = 1;
+  clearInterval(timerkey);
+  fillBrowserTime();
+  timerkey = setInterval(fillBrowserTime, 1000);
+  enableImage();
+  enableButton('btn_Cancel', 'btn_Apply');
+}
+
+function cancel() { document.location.href = "time.html"; }
+
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.cancel()', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.apply()', 'btn_Apply'));
+</script>
+</body>
+</html>

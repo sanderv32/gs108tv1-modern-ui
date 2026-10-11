@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="default.css" rel="stylesheet">
+<script src="rollover.js"></script>
+<title>Advanced RSTP</title>
+</head>
+<body class="ui">
+<h1>Advanced RSTP</h1>
+<p class="lead">Spanning tree state and bridge timers.</p>
+
+<form id="advancedStpConfiguration" name="frm" method="get" action="advance_rstpset.cgi" onsubmit="CheckSTPCookies();return false">
+<section>
+  <h2>RSTP <a class="help" href="javascript:void(0)" onclick="newWindow('RstpConfig_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt>RSTP</dt>
+    <dd class="choices">
+      <label><input type="radio" name="subSection1" value="0" onclick="enableImage();disableInput()"> Disable</label>
+      <label><input type="radio" name="subSection1" value="1" onclick="enableImage();enableInput()"> Enable</label>
+    </dd>
+    <dt class="bpdu">Forward RSTP BPDUs</dt>
+    <dd class="choices bpdu">
+      <label><input type="radio" name="fwd_bpdu" value="0" onclick="enableImage2()"> Disable</label>
+      <label><input type="radio" name="fwd_bpdu" value="1" onclick="enableImage2()"> Enable</label>
+      <span class="hint">only when RSTP is disabled</span>
+    </dd>
+  </dl>
+</section>
+
+<section>
+  <h2>Bridge settings <a class="help" href="javascript:void(0)" onclick="newWindow('BridgeSettings_help.html','','448','336')" title="Help">?</a></h2>
+  <dl class="fields">
+    <dt><label for="bp">Bridge priority</label></dt>
+    <dd><input type="text" id="bp" name="inputBox_BridgePriority" size="6" inputmode="numeric" value="{{var fn=0x8008534c id=7}}" oninput="enableImage()"><span class="hint">0&ndash;65535, multiple of 4096 (default 32768)</span></dd>
+    <dt><label for="ma">Max age</label></dt>
+    <dd><input type="text" id="ma" name="inputBox_BridgeMaxAge" size="4" inputmode="numeric" value="{{var fn=0x8008534c id=8}}" oninput="enableImage()"><span class="hint">6&ndash;40 s (default 20)</span></dd>
+    <dt><label for="ht">Hello time</label></dt>
+    <dd><input type="text" id="ht" name="inputBox_BridgeHelloTime" size="4" inputmode="numeric" value="{{var fn=0x8008534c id=9}}" oninput="enableImage()"><span class="hint">1&ndash;10 s (default 2)</span></dd>
+    <dt><label for="fd">Forward delay</label></dt>
+    <dd><input type="text" id="fd" name="inputBox_BridgeFwdDelay" size="4" inputmode="numeric" value="{{var fn=0x8008534c id=10}}" oninput="enableImage()"><span class="hint">4&ndash;30 s (default 15)</span></dd>
+  </dl>
+</section>
+</form>
+
+<script>
+var STPflag = {{var fn=0x8008524c id=0 arg=255}};
+var bpdu_status = "{{var fn=0x8008524c id=1 arg=255}}";
+var f = document.frm;
+var bridge = [f.inputBox_BridgePriority.value, f.inputBox_BridgeMaxAge.value, f.inputBox_BridgeHelloTime.value, f.inputBox_BridgeFwdDelay.value];
+var boxes = [f.inputBox_BridgePriority, f.inputBox_BridgeMaxAge, f.inputBox_BridgeHelloTime, f.inputBox_BridgeFwdDelay];
+
+function showBpdu(show) {
+  document.querySelectorAll(".bpdu").forEach(function (e) { e.style.display = show ? "" : "none"; });
+}
+// RSTP off: bridge timers read-only, BPDU forwarding configurable.
+function disableInput() {
+  f.fwd_bpdu[bpdu_status == '0' ? 0 : 1].checked = true;
+  showBpdu(true);
+  boxes.forEach(function (b) { b.disabled = true; });
+}
+function enableInput() {
+  showBpdu(false);
+  boxes.forEach(function (b) { b.disabled = false; });
+}
+
+function check() {
+  var vp = f.inputBox_BridgePriority.value, va = f.inputBox_BridgeMaxAge.value,
+      vh = f.inputBox_BridgeHelloTime.value, vf = f.inputBox_BridgeFwdDelay.value;
+  function bad(msg, reset) {
+    alert(msg);
+    reset.forEach(function (i) { boxes[i].value = bridge[i]; });
+    return false;
+  }
+  if (!/^\d+$/.test(vp) || vp > 65535) return bad("Bridge Priority must be between 0 and 65535", [0]);
+  if (vp % 4096 != 0) return bad("Priority must be a multiple of 4096", [0]);
+  if (!/^\d+$/.test(va) || va < 6 || va > 40) return bad("Bridge Max Age must be between 6 and 40", [1]);
+  if (!/^\d+$/.test(vh) || vh < 1 || vh > 10) return bad("Bridge Hello Time must be between 1 and 10", [2]);
+  if (!/^\d+$/.test(vf) || vf < 4 || vf > 30) return bad("Bridge Forward Delay must be between 4 and 30", [3]);
+  va = +va; vh = +vh; vf = +vf;
+  if (va < 2 * (vh + 1)) return bad("The values must satisfy:\n2*(Hello Time+1) <= Max Age <= 2*(Forward Delay-1)", [1, 2]);
+  if (va > 2 * (vf - 1)) return bad("The values must satisfy:\n2*(Hello Time+1) <= Max Age <= 2*(Forward Delay-1)", [1, 3]);
+  return true;
+}
+
+f.subSection1[STPflag == '0' ? 0 : 1].checked = true;
+if (STPflag == '0') disableInput(); else enableInput();
+
+function CheckSTPCookies() {
+  if (!isOn('btn_Apply')) return;
+  if (!check()) return;
+  f.submit();
+}
+function Cancel() {
+  if (!isOn('btn_Cancel')) return;
+  document.location.href = "advancedStpConfiguration.html";
+}
+PaintButtons(CreateEditblBtns('Cancel', 'parent.maincontent.Cancel();', 'btn_Cancel') +
+             CreateEditblBtns('Apply', 'parent.maincontent.CheckSTPCookies()', 'btn_Apply'));
+</script>
+</body>
+</html>
