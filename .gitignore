@@ -26,3 +26,9 @@ ghidra/ghidra_11.4.2_PUBLIC/tools/_code_browser.tcd
 # Ghidra project: contains the decompiled Netgear firmware, not to be redistributed
 gs108t.gpr
 gs108t.rep/
+
+# Netgear's stock firmware, vendor download and original web dump; not to be redistributed
+GS108T-V3.0.4.10.bin
+GS108Tv1 Firmware Version 3.0.4.10.zip
+ReleaseNotes_GS108Tv1_fw_3.0.4.10.html
+web_extracted/
