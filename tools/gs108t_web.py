@@ -192,6 +192,55 @@ def extract(bin_path, out):
     print("extracted %d table entries, %d files -> %s" % (len(rows), len(ids), out))
 
 
+# ---------------------------------------------------------------- build-time rewrites (pack + devserver)
+
+# The switch's TCP stack loses ~5% of its packets and only recovers after a 1-2 s retransmission
+# timeout, so every request costs. Two rewrites cut requests without touching the page sources:
+#
+# 1. Images: every *.gif is a blank 1x1 (see manifest), but each name is still a separate request.
+#    src="grey_b.gif" becomes src="data:...;base64,<blank gif>#grey_b.gif": the browser decodes it
+#    locally, while scripts - which only ever look at or replace the *end* of img.src
+#    (substring(len-5), Parse_imgSrc = last 10 chars, /on\.gif$/) - still see the original name.
+#    CSS background images become none.
+# 2. Cache busting: the switch serves .css/.js with a 30-day max-age and a fixed Last-Modified,
+#    so after flashing, browsers keep the old ones. References get "?v=<content hash>" (the switch
+#    ignores query strings on static files), which changes only when that file changes.
+GIF_DATA = b"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw#"   # = files/_blank.gif (padding dropped: no "=" in unquoted attributes)
+GIF_SRC = re.compile(rb"""(\bsrc\s*=\s*\\?["']?)(?:[A-Za-z0-9_./-]*/)?(?=[A-Za-z0-9_]+\.gif\b)""", re.I)  # drops ../../App_themes/.../
+GIF_SRC_CONCAT = re.compile(rb"<img src='\+")          # rollover.js button builder: src='+name+'_on.gif
+GIF_CSS = re.compile(rb"""url\(\s*['"]?[A-Za-z0-9_]+\.gif['"]?\s*\)""", re.I)
+ASSET_REF = re.compile(rb"""(\b(?:href|src)\s*=\s*\\?["']?)([A-Za-z0-9_-]+\.(?:css|js))(?=\\?["'\s>])""", re.I)
+
+
+def rewrite_gifs(cid, blob):
+    if cid.lower().endswith(".css"):
+        return GIF_CSS.sub(b"none", blob)
+    if cid.lower().endswith(".gif"):
+        return blob
+    blob = GIF_SRC.sub(lambda m: m.group(1) + GIF_DATA, blob)
+    return GIF_SRC_CONCAT.sub(b"<img src='+\"" + GIF_DATA + b"\"+", blob)
+
+
+def asset_versions(src, man):
+    """name -> short hash of the file it serves, for every .css/.js entry."""
+    out = {}
+    for e in man["entries"]:
+        if e["name"].lower().endswith((".css", ".js")):
+            blob = rewrite_gifs(e["content"], open(os.path.join(src, "files", e["content"]), "rb").read())
+            out[e["name"].lower().encode()] = hashlib.sha256(blob).hexdigest()[:8].encode()
+    return out
+
+
+def rewrite_web(cid, blob, versions):
+    blob = rewrite_gifs(cid, blob)
+    if cid.lower().endswith((".gif", ".css")):
+        return blob
+    def ver(m):
+        v = versions.get(m.group(2).lower())
+        return m.group(0) + b"?v=" + v if v else m.group(0)
+    return ASSET_REF.sub(ver, blob)
+
+
 # ---------------------------------------------------------------- pack
 
 def pool_range(img):
@@ -204,7 +253,8 @@ def pool_range(img):
     return lo, hi
 
 
-def pack(bin_path, src, out_bin, minify=False, ui_version="unknown"):
+def pack(bin_path, src, out_bin, minify=False, ui_version="unknown", rewrite=True):
+    """rewrite=False packs the files verbatim (verify's stock round trip)."""
     img = Image(open(bin_path, "rb").read())
     rows = img.table()
     man = json.load(open(os.path.join(src, "manifest.json")))
@@ -216,11 +266,14 @@ def pack(bin_path, src, out_bin, minify=False, ui_version="unknown"):
     order = [c for c in man["layout"] if c in used]
     order += [c for c in dict.fromkeys(used) if c not in order]
 
+    versions = asset_versions(src, man) if rewrite else None
     pool = bytearray()
     desc_of = {}
     for cid in order:
         blob = open(os.path.join(src, "files", cid), "rb").read()
         blob = blob.replace(b"@@UI_VERSION@@", ui_version.encode("ascii", "xmlcharrefreplace"))  # build stamp (build.sh)
+        if rewrite:
+            blob = rewrite_web(cid, blob, versions)
         if minify:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             import minify as mz
@@ -314,7 +367,7 @@ def verify(bin_path):
     orig = open(bin_path, "rb").read()
     with tempfile.TemporaryDirectory() as t:
         extract(bin_path, os.path.join(t, "src"))
-        new = pack(bin_path, os.path.join(t, "src"), os.path.join(t, "out.bin"))
+        new = pack(bin_path, os.path.join(t, "src"), os.path.join(t, "out.bin"), rewrite=False)
         if new != orig:
             diff = [i for i in range(len(orig)) if orig[i] != new[i]]
             sys.exit("round trip FAILED: %d bytes differ, first at file offset %#x" % (len(diff), diff[0]))

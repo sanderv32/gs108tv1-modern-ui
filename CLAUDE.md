@@ -79,11 +79,30 @@ payload length after header + 16-bit byte sum of that payload. No signature. Two
 - Post-action pages (fdload/fuload/cdload/cuload/restore/dispdwnstat/cfeupgrade .cgi, errormsg.htm) are rewritten.
 - devserver always proxies names that have a firmware handler (manifest "cgi" != 0), e.g. dlrestart.cgi.
 
+## Build-time rewrites (`rewrite_web` in gs108t_web.py; pack and devserver both apply them)
+The switch loses ~5% of its outgoing packets and recovers only via a 1-2 s TCP retransmission timeout
+(measured with tcpdump, same over Wi-Fi), so every request and every KB per page view costs. Sources stay as-is:
+- `src="x.gif"` (also `../../App_themes/.../x.gif`, and rollover.js's `'<img src='+name+'_on.gif`) becomes
+  `src="data:image/gif;base64,<_blank.gif>#x.gif"`: no request, and scripts still see the name at the end of
+  img.src (they only use suffixes: substring(len-5), Parse_imgSrc = last 10 chars, /on\.gif$/). CSS
+  `url(x.gif)` becomes `none`. Never write code that parses img.src from the front or by "/".
+- `href="default.css"` / `src="rollover.js"` get `?v=<sha256 of the file, 8 hex>`: the switch caches .css/.js
+  for 30 days with a fixed Last-Modified, and ignores query strings, so this busts stale caches after a flash.
+- `verify` packs with rewrite=False (stock round trip stays byte-identical).
+- Top-level pages (index, login, passwordwrong, help pop-ups) have `<link rel="icon" href="data:,">`; the switch
+  has no favicon and every request costs.
+- Each headless-browser login takes one of the switch's 4 session slots until the idle timeout (no logout
+  frees it); after a few test runs the switch answers "Maximal number of logined user reached!".
+
 ## Flashing (findings from Ghidra)
 - Dual-bank flash (when flash >= 4 MB): banks at 0x80000 and 0x240000, 0x1c0000 each; boot code below 0x80000.
   FUN_800a9618(0=running bank, 1=other bank, 2=boot). fupgrade writes the *other* bank, verifies the sum16, and only
   then appends marker `AC seq_lo seq_hi 47` with seq = running+1. Running bank = higher seq (FUN_800a93bc/FUN_800a9330).
   So a rejected/interrupted upload leaves the running image intact. CFE's own choice logic is not in this ELF (unverified).
+- Time (cgi_time @0x8008951c): the system clock holds LOCAL time. tz_set_offset_shift_clock shifts the clock by
+  (new - old offset); manual mode sets the zone, then clock_set_local_time overwrites the clock with the entered
+  time, so the zone never alters a manually entered time (but changing only the zone later shifts the clock).
+  SNTP time (UTC) gets the zone offset added. time.cgi never reads inp3.
 - Sessions: cookie token %08X%08X from system time, bound to client IP, 4 slots (session_validate_cookie).
 - `tools/flash.py IMAGE.hex [--upload]`: validates, logs in, posts to fupgrade.cgi (UI-independent recovery path).
 - Build: `python3 tools/gs108t_web.py pack GS108T-V3.0.4.10.bin web -o build/X.bin --hex build/X.hex`; the diff vs

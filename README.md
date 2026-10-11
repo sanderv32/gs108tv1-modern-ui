@@ -103,6 +103,18 @@ by C code. So:
 Converted pages use `<body class="ui">` and the styles at the end of `default.css`. Colours are theme
 variables (`var(--surface)`, `var(--text)`, …), never hex values.
 
+`pack` (and the dev server) rewrite two things on the way out, so the sources stay readable:
+
+- **Images:** `src="x.gif"` becomes an inline blank image with the name kept after a `#`, so no
+  request reaches the switch, while the old scripts that switch `x_on.gif`/`x_off.gif` keep working. Those
+  scripts only look at the end of `img.src`; new code must do the same.
+- **Cache busting:** `default.css`, `rollover.js` and the other stylesheets and scripts are referenced as
+  `default.css?v=<hash of the file>`. The switch tells browsers to cache them for 30 days, so without this a
+  browser would keep using the old files after a flash.
+
+The switch's network stack is slow to recover from lost packets (each loss costs 1–2 seconds), so fewer
+requests and smaller pages make the UI noticeably faster.
+
 ## Getting the stock firmware
 
 The build needs Netgear's firmware **3.0.4.10** as `GS108T-V3.0.4.10.bin` in the project root. It must be

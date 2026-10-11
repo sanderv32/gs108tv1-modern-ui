@@ -182,12 +182,17 @@ class Site:
                     return values, label
         return None, None
 
-    def local(self, name):
+    def local(self, name, rewrite=True):
         cid = self.entry.get(name)
         if cid is None:
             return None, False
         path = os.path.join(self.src, "files", cid)
         blob = open(path, "rb").read().replace(b"@@UI_VERSION@@", b"dev server")
+        # same GIF / ?v= rewrites as pack; versions re-read per request so edits bust the cache
+        if not rewrite:
+            return blob, cid in self.templates
+        man = fw.json.load(open(os.path.join(self.src, "manifest.json")))
+        blob = fw.rewrite_web(cid, blob, fw.asset_versions(self.src, man))
         if self.minify:
             blob = minify.minify(cid, blob)
         return blob, cid in self.templates
@@ -249,7 +254,9 @@ def make_app(site, switch):
                             % type(e).__name__, status=502, mimetype="text/html",
                             headers={"X-Devserver": "switch-error", "Cache-Control": "no-store"})
         status = "passthrough"
-        if r.status_code == 200 and name in site.stock and blob is not None and blob != site.stock_blob.get(name):
+        # pages whose source is still stock pass through (compare before the GIF/?v= rewrites)
+        if r.status_code == 200 and name in site.stock and blob is not None \
+                and site.local(name, rewrite=False)[0] != site.stock_blob.get(name):
             try:
                 values, base = site.match(name, body)
                 if values is None:
@@ -280,6 +287,12 @@ def make_app(site, switch):
                 status = "rendered errormsg.htm"
         if DUMP_ALL and r.status_code == 200 and name:
             dump(name, r.content)  # raw switch output, before any re-rendering
+        if r.status_code == 200 and name in site.entry and name not in ("gs108t.cfg", "firmware.bin") \
+                and "html" in r.headers.get("Content-Type", "text/html"):
+            # pages the switch served as-is still get pack's GIF/?v= rewrites (idempotent), so the
+            # devserver behaves like the next flash even while the switch runs an older build
+            man = fw.json.load(open(os.path.join(site.src, "manifest.json")))
+            body = fw.rewrite_web(site.entry[name], body, fw.asset_versions(site.src, man))
         # point absolute URLs at the devserver, but leave the switch's address as page text (e.g. "IP address")
         body = re.sub(rb"(https?:)?//" + re.escape(sw_host.encode()), lambda m: (m.group(1) or b"") + b"//" + request.host.encode(), body)
         out = Response(body, status=r.status_code)

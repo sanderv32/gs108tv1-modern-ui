@@ -22,6 +22,7 @@ PAGE = """<!doctype html>
 <meta charset="iso-8859-1">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>%(title)s &ndash; Netgear GS108T Help</title>
+<link rel="icon" href="data:,">
 <link href="pop_styles.css" rel="stylesheet">
 <script src="rollover.js"></script>
 </head>
