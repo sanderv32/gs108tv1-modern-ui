@@ -186,7 +186,39 @@ in the open project. It was used to work out:
   the running image alone;
 - sessions (cookie, IP binding, 4 slots) and how the clock and time zone are stored.
 
-The findings are written up in `CLAUDE.md`. The bridge listens on port 8080 by default.
+The findings are written up in `CLAUDE.md`.
+
+### Setting up Ghidra and the MCP server
+
+The Ghidra project is not part of this repository (it contains Netgear's firmware), so you build your own:
+
+1. Install [Ghidra](https://github.com/NationalSecurityAgency/ghidra/releases) (11.4.2 was used) and download a
+   [GhidraMCP release](https://github.com/LaurieWired/GhidraMCP/releases) (1.4 was used). The release zip contains
+   the Ghidra extension (`GhidraMCP-*.zip`) and the MCP bridge (`bridge_mcp_ghidra.py`).
+2. In Ghidra: *File → Install Extensions → +*, pick the extension zip, restart Ghidra. Create a project, import
+   `GS108T-V3.0.4.10.bin` (an ELF, so Ghidra detects MIPS 32-bit little-endian) and let it auto-analyse.
+3. Open the program in the CodeBrowser and enable the plugin: *File → Configure → Developer → GhidraMCPPlugin*.
+   It serves an HTTP API on `http://127.0.0.1:8080/` while the CodeBrowser is open (the port can be changed under
+   *Edit → Tool Options → GhidraMCP HTTP Server*).
+4. Install the bridge's dependencies. The bridge needs the 1.x API of the `mcp` package; with 2.x it exits at
+   import and Claude Code shows the server as failed:
+
+   ```
+   python3 -m pip install "mcp<2" requests
+   ```
+
+5. Register the server with Claude Code, from the repository directory:
+
+   ```
+   claude mcp add ghidra -- python3 /path/to/GhidraMCP-release-1-4/bridge_mcp_ghidra.py \
+       --ghidra-server http://127.0.0.1:8080/
+   ```
+
+   This stores the configuration privately for this project on your machine (local scope), so no paths end up
+   in the repository. `/mcp` inside Claude Code shows whether it is connected; the `mcp__ghidra__*` tools only
+   work while Ghidra has the program open. Other MCP clients take the same command and arguments.
+
+Port 8080 is why the dev server defaults to 8088.
 
 ## Disclaimer
 

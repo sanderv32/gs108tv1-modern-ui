@@ -13,15 +13,12 @@ tftp_root/
 __pycache__/
 *.pyc
 
-# Ghidra runtime noise
-ghidra/**/application.log
+# Local Ghidra install with the GhidraMCP plugin, and the MCP config (machine-specific paths); see README
+ghidra/
+GhidraMCP-release-*.zip
+.mcp.json
 *.lock
 *.lock~
-
-# Ghidra UI state (window layout, preferences); rewritten every session
-ghidra/ghidra_11.4.2_PUBLIC/FrontEndTool.xml
-ghidra/ghidra_11.4.2_PUBLIC/preferences
-ghidra/ghidra_11.4.2_PUBLIC/tools/_code_browser.tcd
 
 # Ghidra project: contains the decompiled Netgear firmware, not to be redistributed
 gs108t.gpr
