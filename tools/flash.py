@@ -6,6 +6,8 @@
 
 Talks to the same CGIs the stock page uses, so it works even if a flashed UI is broken:
   login.cgi   POST password=..&rtime=..   -> session cookie (bound to this machine's IP, 4 slots max)
+              A login whose rtime equals an active session's token replaces that session, so a fixed
+              rtime keeps flash.py in one slot however often it runs.
   fupgrade.cgi POST multipart, single part "http_dl_fname" = the .hex
   upgstatus.html  "var current = N; var total = M;" progress while flashing
 
@@ -21,12 +23,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gs108t_web as fw
 
 
+RTIME = "1080108"  # fixed login token (any non-zero number); the stock page sends ms/500
+
+
 def login(s, base, password):
-    r = s.post(base + "/login.cgi", data={"password": password, "rtime": str(time.time() * 1000 / 500)},
+    r = s.post(base + "/login.cgi", data={"password": password, "rtime": RTIME},
                allow_redirects=True, timeout=20)
     if "maximal number" in r.text.lower():
-        sys.exit("login refused: all 4 session slots are in use. Sessions are only freed by the idle timeout\n"
-                 "(System Information > Idle timeout, 3-30 min); 'Log out' does not free one. Wait and retry.")
+        sys.exit("login refused: all 4 session slots are in use by other logins. Sessions are only freed by the\n"
+                 "idle timeout (System Information > Idle timeout, 3-30 min); 'Log out' does not free one.")
     page = s.get(base + "/sysInfo.html", timeout=20)
     if "inputBox_SystemName" not in page.text and "System Information" not in page.text:
         sys.exit("login failed: wrong password?")

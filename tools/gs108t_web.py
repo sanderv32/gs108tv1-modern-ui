@@ -18,7 +18,8 @@ Firmware layout (little-endian MIPS eCos ELF, vaddr 0x80001000 at file offset 0x
 Upload image (.hex) = gzip of the ELF with
   FNAME   "_GS108Tv1h1_bcm.robo_"
   FCOMMENT "%08X%04X" % (len(payload), sum(payload) & 0xffff)   payload = bytes after the header
-  (checked by cgi_fupgrade_app / FUN_800a8fd0 / FUN_800a9214; no signature). Max upload 0x180000.
+  (checked by cgi_fupgrade_app / fw_image_parse_header @0x800a8fd0 / fw_image_verify_sum16 @0x800a9214;
+  no signature). Max upload 0x180000.
 
 Source tree written by `extract`:
   manifest.json   table entries (name -> content, cgi, flags) + pool layout order

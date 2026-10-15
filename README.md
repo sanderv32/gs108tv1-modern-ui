@@ -77,6 +77,7 @@ The switch address defaults to `http://192.168.0.239`; pass `--switch http://<ip
 | `tools/minify.py` | Conservative HTML/CSS/JS minifier used by `pack --minify` and `devserver --minify`. |
 | `tools/convert_help.py` | Converts the help pop-ups from the stock firmware (called by `web_sync.py`). |
 | `tools/flash.py` | Logs in and uploads an image to `fupgrade.cgi`, independent of the web UI. |
+| `tools/tftp_server.py` | Receives backups from the switch over TFTP (`sudo`, port 69; `-v` dumps packets). |
 | `build.sh` | Full build plus checks. |
 | `CLAUDE.md` | Detailed technical notes (firmware format, conventions, findings). |
 
@@ -155,8 +156,10 @@ two ways to get it:
    project root as it is. The build takes the `.hex` out of it and makes `GS108T-V3.0.4.10.bin`.
 2. **From your own switch**, if it already runs 3.0.4.10 (System → System Information shows the software
    version), via Maintenance → File Upload → Firmware:
-   - **TFTP (recommended):** run a TFTP server on your computer and enter its address and a file name. The
-     switch writes the exact image, byte-identical to Netgear's `.hex`.
+   - **TFTP (recommended):** run `sudo python3 tools/tftp_server.py` on your computer and enter its address
+     and the file name `GS108T-V3.0.4.10.hex`. The file lands in `tftp_root/`; move it to the project root. The
+     switch writes the exact image, byte-identical to Netgear's `.hex`. Use this server rather than a standard
+     one: the switch sends its data to port 69 instead of the transfer port a normal TFTP server answers from.
    - **HTTP ("Download to this computer"):** be patient, the switch sends it very slowly (about 10 minutes for
      1.2 MB). It also appends one extra line break after the image; `checkhex`, `unhex` and `flash.py`
      recognise and ignore that byte.
